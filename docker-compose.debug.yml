@@ -1,0 +1,12 @@
+services:
+  frontend-debug:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"

@@ -1,0 +1,18 @@
+# Ignorera miljöfiler
+.env.local
+.env.production
+
+# Ignorera cachefiler
+.next/
+
+# Ignorera IDE-specifika filer
+.idea/
+
+# Ignorera loggfiler
+*.log
+
+# Ignorera andra specifika filer
+.eslintcache
+
+
+node_modules/
