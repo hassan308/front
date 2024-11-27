@@ -206,52 +206,59 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               className="bg-white rounded-lg border border-gray-200 shadow-lg z-50 fixed"
             >
               <form onSubmit={handleSubmit} className="relative">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={keyword}
-                  onChange={handleInputChange}
-                  placeholder="Sök efter jobb, företag eller plats..."
-                  className="w-full px-4 py-3 pl-10 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <div className="absolute inset-y-0 left-0 flex items-center pl-4">
-                  <Search className="w-5 h-5 text-gray-400" />
-                </div>
-                
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                  <motion.button
-                    type="submit"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="h-9 px-3 bg-blue-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
-                  >
-                    <span className="text-[15px]">Sök</span>
-                  </motion.button>
-                  
-                  {onAiModeToggle && (
+                <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
+                  <div className="relative flex-1">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={keyword}
+                      onChange={handleInputChange}
+                      placeholder="Sök efter jobb, företag eller plats..."
+                      className="w-full px-4 py-3 pl-10 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                      <Search className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 md:flex-none">
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 md:flex-none h-10 px-4 bg-blue-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
+                    >
+                      <span className="text-[15px]">Sök</span>
+                    </motion.button>
+                    
+                    {onAiModeToggle && (
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={onAiModeToggle}
+                        className={`h-10 px-3 rounded-lg transition-colors duration-200 flex items-center gap-2 ${
+                          isAiMode 
+                            ? 'bg-blue-100 text-blue-600' 
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span className="text-sm font-medium md:hidden">AI-sökning</span>
+                      </motion.button>
+                    )}
+
                     <motion.button
                       type="button"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={onAiModeToggle}
-                      className={`p-1.5 rounded-md transition-colors duration-200 ${
-                        isAiMode 
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
+                      onClick={handleClose}
+                      className="h-10 px-3 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-500 flex items-center gap-2"
                     >
-                      <Sparkles className="w-4 h-4" />
+                      <X className="w-4 h-4" />
+                      <span className="text-sm font-medium md:hidden">Stäng</span>
                     </motion.button>
-                  )}
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleClose}
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-500"
-                  >
-                    <X className="w-4 h-4" />
-                  </motion.button>
+                  </div>
                 </div>
               </form>
             </motion.div>
