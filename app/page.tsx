@@ -63,10 +63,11 @@ export default function JobSearch() {
   }, [aiSearchExamples.length]);
 
   // Sökfunktion
-  const handleSearch = async () => {
+  const handleSearch = async (keyword?: string) => {
     setIsLoading(true);
+    const searchTerm = keyword || searchKeyword;
     try {
-      if (!searchKeyword.trim()) {
+      if (!searchTerm.trim()) {
         setJobs([]);
         setIsInitialView(true);
         return;
@@ -76,8 +77,8 @@ export default function JobSearch() {
       console.log('Making search request to:', endpoint);
       
       const requestBody = isAiMode 
-        ? { query: searchKeyword }
-        : { search_term: searchKeyword, max_jobs: 500 }; // Changed from keyword to search_term
+        ? { query: searchTerm }
+        : { search_term: searchTerm, max_jobs: 500 }; // Changed from keyword to search_term
       
       const searchResponse = await fetch(endpoint, {
         method: 'POST',
@@ -133,6 +134,10 @@ export default function JobSearch() {
   };
 
   const handleCreateCV = (job: Job) => {
+    if (!user) {
+      setIsLoginOpen(true);
+      return;
+    }
     setSelectedJob(job);
     // Här kan du lägga till logik för att öppna CV dialog
     console.log('Creating CV for job:', job.title);
@@ -337,7 +342,7 @@ export default function JobSearch() {
                   onSearch={(keyword) => {
                     console.log('Search from JobList:', keyword);
                     setSearchKeyword(keyword);
-                    handleSearch();
+                    handleSearch(keyword);
                   }}
                   isAiMode={isAiMode}
                   onAiModeToggle={() => setIsAiMode(!isAiMode)}
