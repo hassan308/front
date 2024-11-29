@@ -214,7 +214,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                       value={keyword}
                       onChange={handleInputChange}
                       placeholder="Sök efter jobb, företag eller plats..."
-                      className="w-full px-4 py-3 pl-10 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 pl-10 bg-white border border-gray-200 rounded-lg text-gray-900 text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      style={{ fontSize: '16px' }}
                     />
                     <div className="absolute inset-y-0 left-0 flex items-center pl-4">
                       <Search className="w-5 h-5 text-gray-400" />
