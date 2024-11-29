@@ -58,6 +58,23 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     };
   }, [isExpanded]);
 
+  useEffect(() => {
+    if (isExpanded) {
+      // Spara nuvarande scroll position
+      const scrollPos = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollPos}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Återställ scroll position
+      const scrollPos = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(scrollPos || '0') * -1);
+    }
+  }, [isExpanded]);
+
   const handleOpen = () => {
     if (searchBoxRef.current) {
       const rect = searchBoxRef.current.getBoundingClientRect();
@@ -67,19 +84,39 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   const handleClose = () => {
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
     setIsClosing(true);
+    
     setTimeout(() => {
       setIsExpanded(false);
       setIsClosing(false);
-      setSearchBoxRect(null);
-    }, 300);
+      
+      // Återställ viewport efter en kort fördröjning
+      setTimeout(() => {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        }
+      }, 100);
+    }, 200);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (keyword.trim()) {
-      onSearch(keyword.trim());
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+      
+      // Stäng först
       handleClose();
+      
+      // Anropa sökning efter en kort fördröjning
+      setTimeout(() => {
+        onSearch(keyword.trim());
+      }, 300);
     }
   };
 
@@ -132,12 +169,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       {/* Kompakt sökfält */}
       <div
         ref={searchBoxRef}
-        className="relative"
-        style={{
-          opacity: isExpanded ? 0 : 1,
-          visibility: isExpanded ? 'hidden' : 'visible',
-          transition: 'opacity 200ms ease-out',
-        }}
+        className="w-full"
       >
         <div
           onClick={handleOpen}
@@ -145,9 +177,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         >
           <input
             readOnly
+            type="text"
+            inputMode="text"
+            autoComplete="off"
             value={keyword}
             placeholder="Sök efter jobb..."
             className="w-full py-3 pl-11 pr-4 text-gray-900 bg-transparent cursor-pointer"
+            style={{ fontSize: '16px' }}
           />
           <div className="absolute inset-y-0 left-0 flex items-center pl-4">
             <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-500" />
@@ -164,7 +200,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-gray-100 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-gray-100/90 backdrop-blur-sm z-50"
               onClick={handleClose}
             />
 
@@ -174,9 +210,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 top: searchBoxRect ? searchBoxRect.top : 0,
                 left: searchBoxRect ? searchBoxRect.left : 0,
                 width: searchBoxRect ? searchBoxRect.width : 0,
-                scale: searchBoxRect ? searchBoxRect.width / (window.innerWidth < 640 ? window.innerWidth - 32 : 600) : 1,
-                x: 0,
-                y: 0,
+                scale: 0.95,
               }}
               animate={{
                 opacity: 1,
@@ -189,21 +223,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               }}
               exit={{
                 opacity: 0,
-                top: searchBoxRect ? searchBoxRect.top : 0,
-                left: searchBoxRect ? searchBoxRect.left : 0,
-                width: searchBoxRect ? searchBoxRect.width : 0,
-                scale: searchBoxRect ? searchBoxRect.width / (window.innerWidth < 640 ? window.innerWidth - 32 : 600) : 1,
-                x: 0,
-                y: 0,
+                scale: 0.95,
               }}
-              transition={isClosing ? {
-                duration: 1,
-                ease: [0.4, 0, 0.2, 1]
-              } : {
-                duration: 1,
-                ease: [0.34, 1.56, 0.64, 1]
-              }}
-              className="bg-white rounded-lg border border-gray-200 shadow-lg z-50 fixed"
+              transition={{ duration: 0.2 }}
+              className="fixed bg-white rounded-lg border border-gray-200 shadow-lg z-50 overflow-hidden"
             >
               <form onSubmit={handleSubmit} className="relative">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
@@ -211,10 +234,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                     <input
                       ref={inputRef}
                       type="text"
+                      inputMode="text"
+                      autoComplete="off"
                       value={keyword}
                       onChange={handleInputChange}
                       placeholder="Sök efter jobb, företag eller plats..."
-                      className="w-full px-4 py-3 pl-10 bg-white border border-gray-200 rounded-lg text-gray-900 text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 pl-10 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       style={{ fontSize: '16px' }}
                     />
                     <div className="absolute inset-y-0 left-0 flex items-center pl-4">
@@ -229,7 +254,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                       whileTap={{ scale: 0.98 }}
                       className="flex-1 md:flex-none h-10 px-4 bg-blue-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
                     >
-                      <span className="text-[15px]">Sök</span>
+                      <span style={{ fontSize: '16px' }}>Sök</span>
                     </motion.button>
                     
                     {onAiModeToggle && (
@@ -245,7 +270,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                         }`}
                       >
                         <Sparkles className="w-4 h-4" />
-                        <span className="text-sm font-medium md:hidden">AI-sökning</span>
+                        <span style={{ fontSize: '16px' }} className="font-medium md:hidden">AI-sökning</span>
                       </motion.button>
                     )}
 
@@ -257,7 +282,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                       className="h-10 px-3 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-500 flex items-center gap-2"
                     >
                       <X className="w-4 h-4" />
-                      <span className="text-sm font-medium md:hidden">Stäng</span>
+                      <span style={{ fontSize: '16px' }} className="font-medium md:hidden">Stäng</span>
                     </motion.button>
                   </div>
                 </div>

@@ -121,6 +121,35 @@ body {
     @apply bg-gray-800 border-gray-700;
 }
 
+/* Prevent zoom on input focus for mobile devices */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  textarea,
+  select {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  * {
+    touch-action: manipulation;
+  }
+  
+  body {
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
+  }
+}
+
+/* Fix iOS input zoom */
+@supports (-webkit-touch-callout: none) {
+  input[type="text"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 /* Behåll även de ursprungliga stilarna */
 @layer base {
     :root {
