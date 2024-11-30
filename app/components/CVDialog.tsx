@@ -12,7 +12,7 @@ import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
 import { auth, db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
-import { Loader2, Lock, ExternalLink, FileText, X, Check, Info, Building2 } from 'lucide-react';
+import { Loader2, Lock, ExternalLink, FileText, X, Check, Info, Building2, Shield, Edit, Download } from 'lucide-react';
 import Image from 'next/image';
 import { API_ENDPOINTS } from '../config/api';
 import { cn } from '../lib/utils';
@@ -83,6 +83,10 @@ export default function CVDialog({
   const [generatedCVUrl, setGeneratedCVUrl] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreatingCV, setIsCreatingCV] = useState(false);
+  const [loadingText, setLoadingText] = useState('');
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -131,49 +135,88 @@ export default function CVDialog({
     }
   }, [isOpen, onLoginRequired, jobTitle]);
 
+  useEffect(() => {
+    if (isCreatingCV) {
+      const texts = [
+        '🔍 Analyserar din profil...',
+        '📝 Skräddarsyr CV...',
+        '✨ Optimerar innehållet...',
+        '🎯 Anpassar efter tjänsten...',
+        '🚀 Nästan klar...'
+      ];
+      let currentIndex = 0;
+
+      const interval = setInterval(() => {
+        setLoadingText(texts[currentIndex]);
+        currentIndex = (currentIndex + 1) % texts.length;
+      }, 2000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isCreatingCV]);
+
+  useEffect(() => {
+    if (generatedCVUrl && !showInfo) {
+      // Vänta lite innan vi visar informationen för snyggare animation
+      setTimeout(() => {
+        setShowInfo(true);
+      }, 600);
+    }
+  }, [generatedCVUrl]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();  // Förhindra att eventet bubblar upp
-    
-    const selectedTemplateObj = cvTemplates.find(t => t.id === selectedTemplate);
-    if (!selectedTemplateObj?.free) {
-      alert('Detta är en PRO-mall. Vänligen uppgradera för att använda denna mall.');
-      return;
-    }
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
-    setGeneratedCVUrl(null);
+    setError(null);
 
-    const cvData = {
-      ...userData,
-      jobTitle: jobTitle,
-      jobDescription: jobDescription,
-      template: selectedTemplate,
-    };
+    const maxRetries = 5;
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-    try {
-      const response = await fetch(API_ENDPOINTS.generateCV, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(cvData),
-      });
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const cvData = {
+          ...userData,
+          jobTitle: jobTitle,
+          jobDescription: jobDescription,
+          template: selectedTemplate,
+        };
 
-      if (!response.ok) {
-        throw new Error('Något gick fel vid generering av CV');
+        const response = await fetch(API_ENDPOINTS.generateCV, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(cvData),
+        });
+
+        if (!response.ok) {
+          if (attempt === maxRetries) {
+            throw new Error('Kunde inte generera CV efter flera försök');
+          }
+          console.log(`Försök ${attempt} misslyckades, försöker igen...`);
+          await delay(1000); // Vänta 1 sekund mellan försök
+          continue;
+        }
+
+        const result = await response.json();
+        const blob = new Blob([result.html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        setGeneratedCVUrl(url);
+        break; // Avbryt loop vid lyckat försök
+      } catch (err) {
+        if (attempt === maxRetries) {
+          console.error('CV generation error:', err);
+          setError(err instanceof Error ? err.message : 'Ett oväntat fel uppstod');
+        } else {
+          console.log(`Försök ${attempt} misslyckades med fel:`, err);
+          await delay(1000);
+        }
       }
-
-      const result = await response.json();
-      const blob = new Blob([result.html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      setGeneratedCVUrl(url);
-
-    } catch (error) {
-      console.error('Fel vid skapande av CV:', error);
-      alert('Ett fel uppstod vid generering av CV. Försök igen senare.');
-    } finally {
-      setIsSubmitting(false);
     }
+
+    setIsSubmitting(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -184,6 +227,17 @@ export default function CVDialog({
   const openGeneratedCV = () => {
     if (generatedCVUrl) {
       window.open(generatedCVUrl, '_blank');
+    }
+  };
+
+  const handleCreateCV = async () => {
+    setIsCreatingCV(true);
+    try {
+      await handleSubmit(new Event('submit'));
+    } finally {
+      setTimeout(() => {
+        setIsCreatingCV(false);
+      }, 1000);
     }
   };
 
@@ -199,16 +253,122 @@ export default function CVDialog({
         !isOpen && "hidden"
       )}
       onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
     >
-      <Dialog 
-        open={isOpen} 
+      <Dialog
+        open={isOpen}
         onOpenChange={(open) => {
-          if (!isSubmitting && open === false) {
-            onClose();
-          }
+          // Prevent any automatic closing
+          return;
         }}
+        modal={true}
       >
-        <DialogContent className="max-w-4xl w-full h-[calc(100vh-2rem)] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogContent 
+          className="max-w-4xl w-full h-[90vh] sm:h-[calc(100vh-2rem)] flex flex-col overflow-hidden p-0 gap-0"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          {isSubmitting && (
+            <div className="absolute inset-0 bg-white/95 backdrop-blur-md z-50 flex flex-col items-center justify-center">
+              <div className="relative w-24 h-24 mb-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#4169E1]/20 via-[#9333EA]/20 to-[#4169E1]/20 rounded-xl animate-pulse" />
+                <FileText className="w-24 h-24 text-[#4169E1]" />
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-semibold">
+                    <span className="text-[#4169E1]">Smidigt.</span>{' '}
+                    <span className="text-[#9333EA]">Smart.</span>{' '}
+                    <span className="text-[#4169E1]">Smidra.</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#4169E1]" />
+                  <span>Skapar ditt CV...</span>
+                </div>
+              </div>
+            </div>
+          )}
+          {generatedCVUrl && !isSubmitting && (
+            <div className="absolute inset-0 bg-white/95 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-6 transition-all duration-500">
+              <div className="relative w-24 h-24">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#4169E1]/20 via-[#9333EA]/20 to-[#4169E1]/20 rounded-xl" />
+                <FileText className="w-24 h-24 text-[#4169E1]" />
+              </div>
+              <div className="flex flex-col items-center gap-4">
+                <h3 className="text-2xl font-semibold text-gray-900">Ditt CV är klart!</h3>
+                <div className="relative">
+                  <div className={cn(
+                    "absolute inset-0 flex items-center justify-center transition-all duration-500",
+                    isCreatingCV ? "opacity-100 scale-100" : "opacity-0 scale-0"
+                  )}>
+                    <div className="w-8 h-8 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.open(generatedCVUrl, '_blank');
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    onPointerUp={(e) => e.stopPropagation()}
+                    className={cn(
+                      "w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-500",
+                      isCreatingCV 
+                        ? "opacity-0 scale-95 translate-y-2" 
+                        : "opacity-100 scale-100 translate-y-0 hover:scale-[1.02] active:scale-[0.98]"
+                    )}
+                  >
+                    <div className="flex items-center justify-center space-x-2 px-4 py-2">
+                      <ExternalLink className="h-4 w-4" />
+                      <span>Öppna CV</span>
+                    </div>
+                  </Button>
+                </div>
+                
+                <div className={cn(
+                  "flex flex-col space-y-3 transition-all duration-500 transform",
+                  showInfo 
+                    ? "opacity-100 translate-y-0" 
+                    : "opacity-0 translate-y-4"
+                )}>
+                  <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    <div className="mt-1 text-blue-500">
+                      <Shield className="h-4 w-4" />
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium text-gray-900">Säker hantering:</span> Ditt CV sparas lokalt på din enhet och lagras inte i våra system.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    <div className="mt-1 text-blue-500">
+                      <Edit className="h-4 w-4" />
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium text-gray-900">Redigerbar:</span> När CV:t öppnas i nästa flik kan du enkelt anpassa och redigera innehållet efter dina önskemål.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    <div className="mt-1 text-blue-500">
+                      <Download className="h-4 w-4" />
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium text-gray-900">Ladda ner:</span> Spara ditt CV som PDF eller dela det direkt med arbetsgivaren.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <DialogTitle className="sr-only">
             Skapa CV för {jobTitle}
           </DialogTitle>
@@ -412,48 +572,107 @@ export default function CVDialog({
                 </div>
                 <div className="flex gap-3">
                   {generatedCVUrl ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        window.open(generatedCVUrl, '_blank');
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onMouseUp={(e) => e.stopPropagation()}
-                      onPointerUp={(e) => e.stopPropagation()}
-                      className="w-full sm:w-auto"
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Öppna CV
-                    </Button>
+                    <div className="space-y-4 w-full">
+                      <div className="relative">
+                        <div className={cn(
+                          "absolute inset-0 flex items-center justify-center transition-all duration-500",
+                          isCreatingCV ? "opacity-100 scale-100" : "opacity-0 scale-0"
+                        )}>
+                          <div className="w-8 h-8 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(generatedCVUrl, '_blank');
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onMouseUp={(e) => e.stopPropagation()}
+                          onPointerUp={(e) => e.stopPropagation()}
+                          className={cn(
+                            "w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-500",
+                            isCreatingCV 
+                              ? "opacity-0 scale-95 translate-y-2" 
+                              : "opacity-100 scale-100 translate-y-0 hover:scale-[1.02] active:scale-[0.98]"
+                          )}
+                        >
+                          <div className="flex items-center justify-center space-x-2 px-4 py-2">
+                            <ExternalLink className="h-4 w-4" />
+                            <span>Öppna CV</span>
+                          </div>
+                        </Button>
+                      </div>
+                      
+                      <div className={cn(
+                        "flex flex-col space-y-3 transition-all duration-500 transform",
+                        showInfo 
+                          ? "opacity-100 translate-y-0" 
+                          : "opacity-0 translate-y-4"
+                      )}>
+                        <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                          <div className="mt-1 text-blue-500">
+                            <Shield className="h-4 w-4" />
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium text-gray-900">Säker hantering:</span> Ditt CV sparas lokalt på din enhet och lagras inte i våra system.
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                          <div className="mt-1 text-blue-500">
+                            <Edit className="h-4 w-4" />
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium text-gray-900">Redigerbar:</span> När CV:t öppnas i nästa flik kan du enkelt anpassa och redigera innehållet efter dina önskemål.
+                          </p>
+                        </div>
+
+                        <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                          <div className="mt-1 text-blue-500">
+                            <Download className="h-4 w-4" />
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium text-gray-900">Ladda ner:</span> Spara ditt CV som PDF eller dela det direkt med arbetsgivaren.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <Button 
                       type="button"
-                      className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-                      disabled={isSubmitting}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSubmit(e);
-                      }}
+                      className={cn(
+                        "w-full sm:w-auto relative bg-gradient-to-r text-white shadow-lg transition-all duration-300",
+                        isCreatingCV 
+                          ? "from-blue-400 to-blue-500 cursor-wait" 
+                          : "from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                      )}
+                      disabled={isCreatingCV}
+                      onClick={handleCreateCV}
                       onMouseDown={(e) => e.stopPropagation()}
                       onPointerDown={(e) => e.stopPropagation()}
                       onMouseUp={(e) => e.stopPropagation()}
                       onPointerUp={(e) => e.stopPropagation()}
                     >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Genererar...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Skapa CV
-                        </>
+                      <div className="flex items-center justify-center min-h-[28px] px-4 py-2 relative">
+                        {isCreatingCV ? (
+                          <div className="flex items-center space-x-3">
+                            <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                            <div className="flex flex-col items-start">
+                              <span className="text-sm font-medium whitespace-nowrap">{loadingText}</span>
+                              <span className="text-[10px] text-white/80 whitespace-nowrap">Det kan ta någon minut...</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <FileText className="h-4 w-4" />
+                            <span>Skapa CV</span>
+                          </div>
+                        )}
+                      </div>
+                      {isCreatingCV && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-blue-500/10 animate-pulse rounded-md pointer-events-none" />
                       )}
                     </Button>
                   )}

@@ -44,6 +44,17 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
   const [showCVDialog, setShowCVDialog] = useState(false); 
   const [isVisible, setIsVisible] = useState(true);
   const [shouldShowLogo, setShouldShowLogo] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (!job.logotype) {
@@ -116,8 +127,13 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
       const modal = document.getElementById('job-modal-content');
       const cvDialog = document.getElementById('cv-dialog');
       
-      // Check if click is outside both modal and CV dialog
-      if (modal && !modal.contains(target) && (!cvDialog || !cvDialog.contains(target))) {
+      // Don't close if click is inside CV dialog
+      if (cvDialog?.contains(target)) {
+        return;
+      }
+      
+      // Only close if click is outside both modals
+      if (modal && !modal.contains(target)) {
         onClose();
       }
     };
@@ -140,7 +156,7 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
   };
 
   const handleCreateCV = () => {
-    setShowCVDialog(true);  
+    setShowCVDialog(true);
     if (onCreateCV) {
       onCreateCV(job);
     }
@@ -438,25 +454,47 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
 
           {/* Footer */}
           <div className="relative bg-white border-t border-gray-100 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleCreateCV}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium shadow-md hover:shadow-lg transition-shadow"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Skapa CV
-              </Button>
-              <Button
-                onClick={() => onCreateCoverLetter?.(job)}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium shadow-md hover:shadow-lg transition-shadow"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Personligt brev
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Button
+                  type="button"
+                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm transition-all duration-200 group"
+                  onClick={handleCreateCV}
+                >
+                  <div className="flex items-center justify-between w-full relative px-4 py-2">
+                    <div className="flex items-center">
+                      <FileText className="mr-2 h-4 w-4" />
+                      <span>Skapa CV</span>
+                    </div>
+                    {isMobile && (
+                      <div className="ml-3 bg-gradient-to-r from-white/10 to-white/20 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full border border-white/20 tracking-wide transition-all duration-200 group-hover:bg-white/30">
+                        BETA
+                      </div>
+                    )}
+                  </div>
+                </Button>
+              </div>
+              <div className="relative flex-1">
+                <Button
+                  type="button"
+                  className="w-full bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100 group"
+                  disabled
+                >
+                  <div className="flex items-center justify-between w-full relative px-4 py-2">
+                    <div className="flex items-center">
+                      <Send className="mr-2 h-4 w-4" />
+                      <span>Personligt brev</span>
+                    </div>
+                    <div className="ml-3 bg-gradient-to-r from-blue-400/80 to-blue-500/80 text-white text-[10px] font-medium px-2 py-0.5 rounded-full tracking-wide">
+                      KOMMER SNART
+                    </div>
+                  </div>
+                </Button>
+              </div>
               {job.application?.webAddress && (
                 <Button
                   onClick={() => window.open(job.application.webAddress, '_blank')}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium shadow-md hover:shadow-lg transition-shadow"
+                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-medium shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   <ArrowUpRight className="w-4 h-4 mr-2" />
                   Ansök här
