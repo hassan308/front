@@ -8,6 +8,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './firebase/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import Header from './components/Header';
+import { SearchBar } from './components/SearchBar';
 import JobList from './components/JobList';
 import CoverLetterDialog from './components/CoverLetterDialog';
 import LoginDialog from './components/LoginDialog';
@@ -81,69 +82,57 @@ export default function JobSearch() {
   }
 
   // Constants
-  const handleSearch = async (keyword?: string, location?: string) => {
+  const handleSearch = async (keyword: string, location: string) => {
     setIsLoading(true);
-    const searchTerm = keyword || searchKeyword;
     
     try {
-      if (!searchTerm.trim() && !location?.trim()) {
-        setJobs([]);
-        setIsInitialView(true);
-        return;
-      }
-
-      let searchResults;
-      
+      // Om AI-läge, analysera först med AI
       if (isAiMode) {
-        // Om AI-läge, analysera först med AI
         console.log('Making AI analysis request');
         const analyzeResponse = await fetch(API_ENDPOINTS.analyze, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query: searchTerm }),
+          body: JSON.stringify({ query: keyword }),
         });
 
         if (!analyzeResponse.ok) {
-          const errorText = await analyzeResponse.text();
-          console.error('AI analysis error:', errorText);
           throw new Error('Kunde inte analysera sökfrågan');
         }
 
-        searchResults = await analyzeResponse.json();
+        const searchResults = await analyzeResponse.json();
         console.log('AI Analys:', searchResults.analysis);
+        setJobs(searchResults.jobs || []);
+        setIsInitialView(false);
       } else {
-        // Om inte AI-läge, sök direkt med /search
-        console.log('Making direct search request');
+        // Vanlig sökning
+        console.log('Making direct search request with:', {
+          search_term: keyword,
+          municipality: location,
+          max_jobs: 500
+        });
         const searchResponse = await fetch(API_ENDPOINTS.search, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            search_term: searchTerm,
-            municipality: location || '',
+            search_term: keyword,
+            municipality: location,
             max_jobs: 500
           }),
         });
 
         if (!searchResponse.ok) {
-          const errorText = await searchResponse.text();
-          console.error('Search error:', errorText);
           throw new Error('Kunde inte hämta jobb');
         }
 
-        searchResults = await searchResponse.json();
+        const searchResults = await searchResponse.json();
+        console.log('Svar från backend:', searchResults);
+        setJobs(searchResults.jobs || []);
+        setIsInitialView(false);
       }
-
-      console.log('Svar från backend:', searchResults);
-      console.log('Antal jobb i svaret:', searchResults.jobs?.length || 0);
-      console.log('Debug info:', searchResults.debug);
-      
-      const jobsList = searchResults.jobs || [];
-      setJobs(jobsList);
-      setIsInitialView(jobsList.length === 0);
     } catch (error) {
       console.error('Ett fel inträffade:', error);
       setJobs([]);
@@ -233,7 +222,7 @@ export default function JobSearch() {
                 <div className="bg-white/95 rounded-xl border border-gray-200/50 shadow-lg hover:shadow-xl transition-shadow">
                   <form onSubmit={(e) => {
                     e.preventDefault();
-                    handleSearch();
+                    handleSearch(searchKeyword, location);
                   }} className="p-3 sm:p-4">
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-2">
@@ -243,6 +232,8 @@ export default function JobSearch() {
                             <input
                               ref={searchInputRef}
                               type="text"
+                              value={searchKeyword}
+                              onChange={(e) => setSearchKeyword(e.target.value)}
                               placeholder={isAiMode 
                                 ? aiSearchExamples[currentPlaceholder]
                                 : "Sök efter roll eller kompetens"}
@@ -285,7 +276,6 @@ export default function JobSearch() {
                             
                             <button 
                               type="submit"
-                              onClick={handleSearch}
                               disabled={isLoading}
                               className={cn(
                                 "px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg",
@@ -329,8 +319,7 @@ export default function JobSearch() {
                           </button>
                           
                           <button 
-                            type="button"
-                            onClick={handleSearch}
+                            type="submit"
                             disabled={isLoading}
                             className={cn(
                               "w-full px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg",
@@ -366,7 +355,7 @@ export default function JobSearch() {
                             key={label}
                             onClick={() => {
                               setSearchKeyword(label);
-                              handleSearch(label);
+                              handleSearch(label, location);
                             }}
                             className="group relative flex items-center space-x-2 px-3 py-1.5 bg-white rounded-full border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all"
                           >
@@ -404,8 +393,8 @@ export default function JobSearch() {
               className={cn("fixed inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-50")}>
               <div className={cn("relative flex flex-col items-center p-8 rounded-2xl bg-white shadow-2xl")}>
                 <div className={cn("relative")}>
-                  <div className={cn("w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin")}></div>
-                  <div className={cn("absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-transparent border-r-blue-600 animate-[spin_1.5s_linear_infinite]")}></div>
+                  <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+                  <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-transparent border-r-blue-600 animate-[spin_1.5s_linear_infinite]" />
                 </div>
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

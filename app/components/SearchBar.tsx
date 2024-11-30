@@ -121,13 +121,24 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         locationRef.current.blur();
       }
       
-      // Stäng först
-      handleClose();
-      
-      // Anropa sökning efter en kort fördröjning
-      setTimeout(() => {
+      // Stäng först om expanderad
+      if (isExpanded) {
+        handleClose();
+        
+        // Anropa sökning efter en kort fördröjning
+        setTimeout(() => {
+          onSearch(keyword.trim(), location.trim());
+        }, 300);
+      } else {
+        // Om inte expanderad, sök direkt
         onSearch(keyword.trim(), location.trim());
-      }, 300);
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e);
     }
   };
 
@@ -187,43 +198,45 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         ref={searchBoxRef}
         className="w-full"
       >
-        <div
-          onClick={handleOpen}
-          className="relative w-full bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow transition-all duration-200 cursor-pointer group"
-        >
-          <div className="flex items-center">
-            <div className="relative flex-1">
-              <input
-                readOnly
-                type="text"
-                inputMode="text"
-                autoComplete="off"
-                value={keyword}
-                placeholder="Sök efter jobb..."
-                className="w-full py-3 pl-11 pr-4 text-gray-900 bg-transparent cursor-pointer border-r border-gray-200"
-                style={{ fontSize: '16px' }}
-              />
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4">
-                <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-500" />
+        <form onSubmit={handleSubmit}>
+          <div
+            onClick={handleOpen}
+            className="relative w-full bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow transition-all duration-200 cursor-pointer group"
+          >
+            <div className="flex items-center">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  value={keyword}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Sök efter jobbtitel, kompetens eller företag"
+                  className="w-full h-12 pl-12 pr-4 text-gray-900 placeholder-gray-500 bg-transparent border-0 focus:ring-0 focus:outline-none sm:text-sm"
+                />
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                  <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-500" />
+                </div>
               </div>
-            </div>
-            <div className="relative flex-1">
-              <input
-                readOnly
-                type="text"
-                inputMode="text"
-                autoComplete="off"
-                value={location}
-                placeholder="Ange stad..."
-                className="w-full py-3 pl-11 pr-4 text-gray-900 bg-transparent cursor-pointer"
-                style={{ fontSize: '16px' }}
-              />
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4">
-                <MapPin className="w-4 h-4 text-gray-400 group-hover:text-gray-500" />
+              <div className="relative flex-1">
+                <input
+                  readOnly
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  value={location}
+                  placeholder="Ange stad..."
+                  className="w-full py-3 pl-11 pr-4 text-gray-900 bg-transparent cursor-pointer"
+                  style={{ fontSize: '16px' }}
+                />
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                  <MapPin className="w-4 h-4 text-gray-400 group-hover:text-gray-500" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </form>
       </div>
 
       {/* Expanderat sökfält */}
