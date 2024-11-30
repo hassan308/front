@@ -14,7 +14,8 @@ interface JobListProps {
   onCreateCV: (job: Job) => void;
   onCreateCoverLetter: (job: Job) => void;
   initialKeyword?: string;
-  onSearch?: (keyword: string) => void;
+  initialLocation?: string;
+  onSearch?: (keyword: string, location?: string) => void;
   isAiMode?: boolean;
   onAiModeToggle?: () => void;
 }
@@ -24,6 +25,7 @@ export default function JobList({
   onCreateCV, 
   onCreateCoverLetter, 
   initialKeyword = '',
+  initialLocation = '',
   onSearch,
   isAiMode = false,
   onAiModeToggle
@@ -159,8 +161,18 @@ export default function JobList({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex-1">
           <SearchBar 
-            initialKeyword={searchKeyword} 
-            onSearch={onSearch}
+            initialKeyword={searchKeyword}
+            initialLocation={initialLocation}
+            onSearch={(keyword, location) => {
+              setSearchKeyword(keyword);
+              setActiveFilters(prev => ({
+                ...prev,
+                location: location ? [location] : []
+              }));
+              if (onSearch) {
+                onSearch(keyword, location);
+              }
+            }}
             isAiMode={isAiMode}
             onAiModeToggle={onAiModeToggle}
           />

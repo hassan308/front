@@ -1,31 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Sparkles, X } from 'lucide-react';
+import { Search, Sparkles, X, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SearchBarProps {
   initialKeyword?: string;
-  onSearch: (keyword: string) => void;
+  initialLocation?: string;
+  onSearch: (keyword: string, location: string) => void;
   isAiMode?: boolean;
   onAiModeToggle?: () => void;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
   initialKeyword = '',
+  initialLocation = '',
   onSearch,
   isAiMode,
   onAiModeToggle,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [keyword, setKeyword] = useState(initialKeyword);
+  const [location, setLocation] = useState(initialLocation);
   const [isClosing, setIsClosing] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const locationRef = useRef<HTMLInputElement>(null);
   const [searchBoxRect, setSearchBoxRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     setKeyword(initialKeyword);
-  }, [initialKeyword]);
+    setLocation(initialLocation);
+  }, [initialKeyword, initialLocation]);
 
   useEffect(() => {
     if (isExpanded && inputRef.current) {
@@ -87,6 +92,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     if (inputRef.current) {
       inputRef.current.blur();
     }
+    if (locationRef.current) {
+      locationRef.current.blur();
+    }
     setIsClosing(true);
     
     setTimeout(() => {
@@ -109,13 +117,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       if (inputRef.current) {
         inputRef.current.blur();
       }
+      if (locationRef.current) {
+        locationRef.current.blur();
+      }
       
       // Stäng först
       handleClose();
       
       // Anropa sökning efter en kort fördröjning
       setTimeout(() => {
-        onSearch(keyword.trim());
+        onSearch(keyword.trim(), location.trim());
       }, 300);
     }
   };
@@ -123,6 +134,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setKeyword(newValue);
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocation(newValue);
   };
 
   const getModalStyles = () => {
@@ -175,18 +191,37 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onClick={handleOpen}
           className="relative w-full bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow transition-all duration-200 cursor-pointer group"
         >
-          <input
-            readOnly
-            type="text"
-            inputMode="text"
-            autoComplete="off"
-            value={keyword}
-            placeholder="Sök efter jobb..."
-            className="w-full py-3 pl-11 pr-4 text-gray-900 bg-transparent cursor-pointer"
-            style={{ fontSize: '16px' }}
-          />
-          <div className="absolute inset-y-0 left-0 flex items-center pl-4">
-            <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-500" />
+          <div className="flex items-center">
+            <div className="relative flex-1">
+              <input
+                readOnly
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                value={keyword}
+                placeholder="Sök efter jobb..."
+                className="w-full py-3 pl-11 pr-4 text-gray-900 bg-transparent cursor-pointer border-r border-gray-200"
+                style={{ fontSize: '16px' }}
+              />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-500" />
+              </div>
+            </div>
+            <div className="relative flex-1">
+              <input
+                readOnly
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                value={location}
+                placeholder="Ange stad..."
+                className="w-full py-3 pl-11 pr-4 text-gray-900 bg-transparent cursor-pointer"
+                style={{ fontSize: '16px' }}
+              />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                <MapPin className="w-4 h-4 text-gray-400 group-hover:text-gray-500" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -199,92 +234,73 @@ export const SearchBar: React.FC<SearchBarProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
               className="fixed inset-0 bg-gray-100/90 backdrop-blur-sm z-50"
               onClick={handleClose}
             />
 
             <motion.div
-              initial={{
-                opacity: 0,
-                top: searchBoxRect ? searchBoxRect.top : 0,
-                left: searchBoxRect ? searchBoxRect.left : 0,
-                width: searchBoxRect ? searchBoxRect.width : 0,
-                scale: 0.95,
-              }}
-              animate={{
-                opacity: 1,
-                top: '50%',
-                left: '50%',
-                width: window.innerWidth < 640 ? 'calc(100vw - 32px)' : 600,
-                scale: 1,
-                x: '-50%',
-                y: '-50%',
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.95,
-              }}
-              transition={{ duration: 0.2 }}
-              className="fixed bg-white rounded-lg border border-gray-200 shadow-lg z-50 overflow-hidden"
+              ref={modalRef}
+              style={getModalStyles()}
+              className="bg-white rounded-lg shadow-lg z-50 overflow-hidden"
             >
-              <form onSubmit={handleSubmit} className="relative">
-                <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
-                  <div className="relative flex-1">
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      inputMode="text"
-                      autoComplete="off"
-                      value={keyword}
-                      onChange={handleInputChange}
-                      placeholder="Sök efter jobb, företag eller plats..."
-                      className="w-full px-4 py-3 pl-10 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      style={{ fontSize: '16px' }}
-                    />
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4">
-                      <Search className="w-5 h-5 text-gray-400" />
+              <form onSubmit={handleSubmit} className="relative p-4">
+                <div className="space-y-4">
+                  <div className="relative flex flex-col md:flex-row gap-2 w-full">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={keyword}
+                        onChange={handleInputChange}
+                        placeholder="Sök efter jobb..."
+                        className="w-full pl-10 pr-3 py-3 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 rounded-lg transition-all text-sm"
+                        style={{ fontSize: '16px' }}
+                      />
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 md:flex-none">
-                    <motion.button
-                      type="submit"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="flex-1 md:flex-none h-10 px-4 bg-blue-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
-                    >
-                      <span style={{ fontSize: '16px' }}>Sök</span>
-                    </motion.button>
-                    
-                    {onAiModeToggle && (
-                      <motion.button
-                        type="button"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={onAiModeToggle}
-                        className={`h-10 px-3 rounded-lg transition-colors duration-200 flex items-center gap-2 ${
-                          isAiMode 
-                            ? 'bg-blue-100 text-blue-600' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        <span style={{ fontSize: '16px' }} className="font-medium md:hidden">AI-sökning</span>
-                      </motion.button>
+                    {!isAiMode && (
+                      <div className="relative flex-1">
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <input
+                          ref={locationRef}
+                          type="text"
+                          value={location}
+                          onChange={handleLocationChange}
+                          placeholder="Ange stad..."
+                          className="w-full pl-10 pr-3 py-3 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 rounded-lg transition-all text-sm"
+                          style={{ fontSize: '16px' }}
+                        />
+                      </div>
                     )}
+                  </div>
+                </div>
 
+                <div className="mt-4 flex items-center justify-between">
+                  {onAiModeToggle && (
                     <motion.button
                       type="button"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={handleClose}
-                      className="h-10 px-3 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-500 flex items-center gap-2"
+                      onClick={onAiModeToggle}
+                      className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        isAiMode 
+                          ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                     >
-                      <X className="w-4 h-4" />
-                      <span style={{ fontSize: '16px' }} className="font-medium md:hidden">Stäng</span>
+                      <Sparkles className="w-4 h-4" />
+                      AI-sökning
                     </motion.button>
-                  </div>
+                  )}
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="ml-auto px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Sök
+                  </motion.button>
                 </div>
               </form>
             </motion.div>

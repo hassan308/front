@@ -34,6 +34,9 @@ interface JobCardProps {
 interface CardColors {
   dominant: string;
   dominantLight: string;
+  backgroundColor: string;
+  textColor: string;
+  borderColor: string;
 }
 
 export default function JobCard({ job, onCreateCV, onCreateCoverLetter, searchKeyword }: JobCardProps) {
@@ -41,7 +44,10 @@ export default function JobCard({ job, onCreateCV, onCreateCoverLetter, searchKe
   const [hasLogoError, setHasLogoError] = useState(false);
   const [colors, setColors] = useState<CardColors>({
     dominant: '#4F46E5',
-    dominantLight: '#4F46E520'
+    dominantLight: '#4F46E520',
+    backgroundColor: 'bg-gray-50',
+    textColor: 'text-gray-900',
+    borderColor: 'border-gray-200'
   });
   const [showModal, setShowModal] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -67,7 +73,10 @@ export default function JobCard({ job, onCreateCV, onCreateCoverLetter, searchKe
       setShouldShowLogo(false);
       setColors({
         dominant: '#4F46E5',
-        dominantLight: '#4F46E520'
+        dominantLight: '#4F46E520',
+        backgroundColor: 'bg-gray-50',
+        textColor: 'text-gray-900',
+        borderColor: 'border-gray-200'
       });
       return;
     }
@@ -84,23 +93,32 @@ export default function JobCard({ job, onCreateCV, onCreateCoverLetter, searchKe
         const dominantColor = color.hex;
         setColors({
           dominant: dominantColor,
-          dominantLight: `${dominantColor}20`
+          dominantLight: `${dominantColor}20`,
+          backgroundColor: 'bg-gray-50',
+          textColor: 'text-gray-900',
+          borderColor: 'border-gray-200'
         });
       } catch (error) {
         console.error('Could not extract colors:', error);
         setColors({
           dominant: '#4F46E5',
-          dominantLight: '#4F46E520'
+          dominantLight: '#4F46E520',
+          backgroundColor: 'bg-gray-50',
+          textColor: 'text-gray-900',
+          borderColor: 'border-gray-200'
         });
       }
     };
 
     img.onerror = () => {
       if (!isMounted) return;
-      console.error('Failed to load logo:', job.logotype);
+      // Silent fail for logo loading errors
       setShouldShowLogo(false);
       setHasLogoError(true);
       setColors({
+        backgroundColor: 'bg-gray-50',
+        textColor: 'text-gray-900',
+        borderColor: 'border-gray-200',
         dominant: '#4F46E5',
         dominantLight: '#4F46E520'
       });
@@ -129,7 +147,7 @@ export default function JobCard({ job, onCreateCV, onCreateCoverLetter, searchKe
           background: 'white',
           borderTop: colors ? `4px solid ${colors.dominant}` : '4px solid #4F46E5',
           boxShadow: colors ? 
-            `0px 2px 4px -2px ${colors.dominant}20,
+            `0px 2px 4px -2px ${colors.dominantLight},
              0px 4px 6px -1px rgba(0,0,0,0.05)` : 
             '0px 2px 4px -2px rgba(0,0,0,0.1), 0px 4px 6px -1px rgba(0,0,0,0.05)',
           transform: 'translateY(0)',
@@ -138,14 +156,14 @@ export default function JobCard({ job, onCreateCV, onCreateCoverLetter, searchKe
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-2px)';
           e.currentTarget.style.boxShadow = colors ?
-            `0px 8px 16px -4px ${colors.dominant}20,
+            `0px 8px 16px -4px ${colors.dominantLight},
              0px 12px 24px -8px rgba(0,0,0,0.1)` :
             '0px 8px 16px -4px rgba(0,0,0,0.1), 0px 12px 24px -8px rgba(0,0,0,0.1)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = colors ?
-            `0px 2px 4px -2px ${colors.dominant}20,
+            `0px 2px 4px -2px ${colors.dominantLight},
              0px 4px 6px -1px rgba(0,0,0,0.05)` :
             '0px 2px 4px -2px rgba(0,0,0,0.1), 0px 4px 6px -1px rgba(0,0,0,0.05)';
         }}
@@ -167,6 +185,9 @@ export default function JobCard({ job, onCreateCV, onCreateCoverLetter, searchKe
                     setShouldShowLogo(false);
                     setHasLogoError(true);
                     setColors({
+                      backgroundColor: 'bg-gray-50',
+                      textColor: 'text-gray-900',
+                      borderColor: 'border-gray-200',
                       dominant: '#4F46E5',
                       dominantLight: '#4F46E520'
                     });

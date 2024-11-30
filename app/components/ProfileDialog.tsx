@@ -10,9 +10,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
-import { auth, db } from '../firebase/firebaseConfig';
+import { auth } from '../firebase/firebaseConfig';
 import { updateProfile } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { Briefcase, GraduationCap, Award, Mail, Phone, MapPin, Loader2 } from 'lucide-react';
 
@@ -61,13 +60,29 @@ export default function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
 
         if (cachedData) {
           const parsedData: UserData = JSON.parse(cachedData);
-          if (now - parsedData.lastUpdated < CACHE_DURATION) {
-            setUserData(parsedData);
-            setIsLoading(false);
-            return;
-          }
+          setUserData(parsedData);
+          setIsLoading(false);
+          return;
+        } else {
+          // Initialize with current user data if no cache exists
+          const newUserData = {
+            displayName: auth.currentUser.displayName || '',
+            email: auth.currentUser.email || '',
+            phone: '',
+            location: '',
+            bio: '',
+            skills: '',
+            experience: '',
+            education: '',
+            certifications: '',
+            lastUpdated: now,
+          };
+          setUserData(newUserData);
+          localStorage.setItem('userData', JSON.stringify(newUserData));
         }
 
+        // Commented out Firebase fetch
+        /*
         try {
           const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
           if (userDoc.exists()) {
@@ -101,6 +116,7 @@ export default function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
           console.error('Error fetching user data:', error);
           setError('Failed to load user data. Please try again.');
         }
+        */
       }
       setIsLoading(false);
     };
@@ -120,16 +136,22 @@ export default function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
     }
 
     try {
+      // Update only displayName in Firebase auth
       await updateProfile(auth.currentUser, {
         displayName: userData.displayName,
       });
 
+      // Comment out Firebase storage
+      /*
       await setDoc(doc(db, 'users', auth.currentUser.uid), {
         ...userData,
         lastUpdated: Date.now(),
       }, { merge: true });
+      */
 
-      localStorage.setItem('userData', JSON.stringify({...userData, lastUpdated: Date.now()}));
+      // Save to localStorage only
+      const updatedUserData = { ...userData, lastUpdated: Date.now() };
+      localStorage.setItem('userData', JSON.stringify(updatedUserData));
 
       onClose();
     } catch (error) {
@@ -145,29 +167,32 @@ export default function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] bg-white rounded-xl shadow-lg overflow-y-auto max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-3xl font-bold text-blue-700">Din profil</DialogTitle>
-          <DialogDescription className="text-lg text-blue-500 mt-2">
-            Uppdatera din profilinformation för att skapa ett imponerande CV.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[700px] bg-white rounded-lg shadow-lg overflow-y-auto max-h-[90vh] p-0">
+        <div className="px-6 py-6 bg-gradient-to-br from-blue-400/90 to-blue-500/90">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-2xl sm:text-3xl font-bold text-white">Din profil</DialogTitle>
+            <DialogDescription className="text-base sm:text-lg text-blue-50">
+              Uppdatera din profilinformation för att skapa ett imponerande CV.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
           </div>
         ) : (
           <motion.form 
             onSubmit={handleSubmit} 
-            className="mt-6 space-y-6"
+            className="p-6 space-y-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="displayName" className="text-blue-600 font-semibold flex items-center">
-                  <Briefcase className="w-4 h-4 mr-2" /> Namn
+                <Label htmlFor="displayName" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-blue-400" /> Namn
                 </Label>
                 <Input
                   id="displayName"
@@ -175,12 +200,12 @@ export default function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
                   value={userData.displayName}
                   onChange={handleInputChange}
                   placeholder="Ditt fullständiga namn"
-                  className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+                  className="w-full transition-shadow focus:ring-2 focus:ring-blue-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-blue-600 font-semibold flex items-center">
-                  <Mail className="w-4 h-4 mr-2" /> E-post
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-blue-400" /> E-post
                 </Label>
                 <Input
                   id="email"
@@ -188,13 +213,13 @@ export default function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
                   value={userData.email}
                   onChange={handleInputChange}
                   placeholder="Din e-postadress"
-                  className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+                  className="w-full bg-gray-50/50"
                   readOnly
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-blue-600 font-semibold flex items-center">
-                  <Phone className="w-4 h-4 mr-2" /> Telefon
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-blue-400" /> Telefon
                 </Label>
                 <Input
                   id="phone"
@@ -202,12 +227,12 @@ export default function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
                   value={userData.phone}
                   onChange={handleInputChange}
                   placeholder="Ditt telefonnummer"
-                  className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+                  className="w-full transition-shadow focus:ring-2 focus:ring-blue-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-blue-600 font-semibold flex items-center">
-                  <MapPin className="w-4 h-4 mr-2" /> Plats
+                <Label htmlFor="location" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-blue-400" /> Plats
                 </Label>
                 <Input
                   id="location"
@@ -215,82 +240,103 @@ export default function ProfileDialog({ isOpen, onClose }: ProfileDialogProps) {
                   value={userData.location}
                   onChange={handleInputChange}
                   placeholder="Din stad eller region"
-                  className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+                  className="w-full transition-shadow focus:ring-2 focus:ring-blue-100"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="bio" className="text-blue-600 font-semibold">Sammanfattning</Label>
-              <Textarea
-                id="bio"
-                name="bio"
-                value={userData.bio}
-                onChange={handleInputChange}
-                placeholder="Kort sammanfattning om dig själv"
-                rows={3}
-                className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
-              />
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="bio" className="text-sm font-medium text-gray-700">Sammanfattning</Label>
+                <Textarea
+                  id="bio"
+                  name="bio"
+                  value={userData.bio}
+                  onChange={handleInputChange}
+                  placeholder="Kort sammanfattning om dig själv"
+                  rows={3}
+                  className="w-full resize-none transition-shadow focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="skills" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Award className="w-4 h-4 text-blue-400" /> Färdigheter
+                </Label>
+                <Textarea
+                  id="skills"
+                  name="skills"
+                  value={userData.skills}
+                  onChange={handleInputChange}
+                  placeholder="Lista dina viktigaste färdigheter"
+                  rows={3}
+                  className="w-full resize-none transition-shadow focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="experience" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-blue-400" /> Arbetslivserfarenhet
+                </Label>
+                <Textarea
+                  id="experience"
+                  name="experience"
+                  value={userData.experience}
+                  onChange={handleInputChange}
+                  placeholder="Beskriv din relevanta arbetslivserfarenhet"
+                  rows={4}
+                  className="w-full resize-none transition-shadow focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="education" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-blue-400" /> Utbildning
+                </Label>
+                <Textarea
+                  id="education"
+                  name="education"
+                  value={userData.education}
+                  onChange={handleInputChange}
+                  placeholder="Lista din utbildningsbakgrund"
+                  rows={3}
+                  className="w-full resize-none transition-shadow focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="certifications" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Award className="w-4 h-4 text-blue-400" /> Certifieringar
+                </Label>
+                <Textarea
+                  id="certifications"
+                  name="certifications"
+                  value={userData.certifications}
+                  onChange={handleInputChange}
+                  placeholder="Lista relevanta certifieringar"
+                  rows={3}
+                  className="w-full resize-none transition-shadow focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="skills" className="text-blue-600 font-semibold flex items-center">
-                <Award className="w-4 h-4 mr-2" /> Färdigheter
-              </Label>
-              <Textarea
-                id="skills"
-                name="skills"
-                value={userData.skills}
-                onChange={handleInputChange}
-                placeholder="Lista dina viktigaste färdigheter"
-                rows={3}
-                className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
-              />
+
+            <div className="sticky bottom-0 pt-6 mt-6 border-t bg-white">
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-400 hover:bg-blue-500 text-white font-medium py-2.5"
+              >
+                Spara profil
+              </Button>
+              {error && (
+                <motion.p 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  className="text-red-500 text-sm text-center mt-2"
+                >
+                  {error}
+                </motion.p>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="experience" className="text-blue-600 font-semibold flex items-center">
-                <Briefcase className="w-4 h-4 mr-2" /> Arbetslivserfarenhet
-              </Label>
-              <Textarea
-                id="experience"
-                name="experience"
-                value={userData.experience}
-                onChange={handleInputChange}
-                placeholder="Beskriv din relevanta arbetslivserfarenhet"
-                rows={4}
-                className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="education" className="text-blue-600 font-semibold flex items-center">
-                <GraduationCap className="w-4 h-4 mr-2" /> Utbildning
-              </Label>
-              <Textarea
-                id="education"
-                name="education"
-                value={userData.education}
-                onChange={handleInputChange}
-                placeholder="Lista din utbildningsbakgrund"
-                rows={3}
-                className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="certifications" className="text-blue-600 font-semibold flex items-center">
-                <Award className="w-4 h-4 mr-2" /> Certifieringar
-              </Label>
-              <Textarea
-                id="certifications"
-                name="certifications"
-                value={userData.certifications}
-                onChange={handleInputChange}
-                placeholder="Lista relevanta certifieringar"
-                rows={3}
-                className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
-              />
-            </div>
-            <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:shadow-lg transition duration-300">
-              Spara profil
-            </Button>
-            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           </motion.form>
         )}
       </DialogContent>
