@@ -20,21 +20,7 @@ import { API_ENDPOINTS } from './config/api';
 import { cn } from './lib/utils';
 
 export default function JobSearch() {
-  const [user, loading, error] = useAuthState(auth);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [isCreateCoverLetterOpen, setIsCreateCoverLetterOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [isInitialView, setIsInitialView] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [location, setLocation] = useState('');
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [isAiMode, setIsAiMode] = useState(false);
-  const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
+  // Constants
   const popularSearches = [
     { icon: Stethoscope, label: 'Sjuksköterska' },
     { icon: Code, label: 'Systemutvecklare' },
@@ -47,17 +33,41 @@ export default function JobSearch() {
   ];
 
   const aiSearchExamples = [
-    // Svenska exempel
     "T.ex. 'Jag söker utvecklarjobb i Stockholm med fokus på React'",
     "T.ex. 'Jag vill jobba som sjuksköterska på deltid i Göteborg'",
-    // Arabiska exempel
     "مثال: 'أبحث عن وظيفة مهندس في ستوكهولم'",
     "مثال: 'أريد العمل كممرض بدوام جزئي في يوتبوري'",
-    // Somaliska exempel
     "Tusaale: 'Waxaan raadinayaa shaqo horumarinta barnaamijyada Stockholm'",
     "Tusaale: 'Waxaan rabaa inaan kalkaaliye caafimaad ka noqdo Göteborg'"
   ];
 
+  // Auth state
+  const [user, loading, error] = useAuthState(auth);
+  
+  // UI state
+  const [mounted, setMounted] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isCreateCoverLetterOpen, setIsCreateCoverLetterOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isInitialView, setIsInitialView] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [location, setLocation] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [isAiMode, setIsAiMode] = useState(false);
+  const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
+  
+  // Refs
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Client-side only mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Placeholder rotation
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentPlaceholder((prev) => (prev + 1) % aiSearchExamples.length);
@@ -65,7 +75,12 @@ export default function JobSearch() {
     return () => clearInterval(interval);
   }, [aiSearchExamples.length]);
 
-  // Sökfunktion
+  // Wait for auth and mounting
+  if (!mounted || loading) {
+    return null;
+  }
+
+  // Constants
   const handleSearch = async (keyword?: string, location?: string) => {
     setIsLoading(true);
     const searchTerm = keyword || searchKeyword;
@@ -169,75 +184,58 @@ export default function JobSearch() {
   return (
     <div className={cn("min-h-screen bg-gradient-to-b from-slate-50 to-blue-50")}>
       <Header 
-        onLoginClick={() => setIsLoginOpen(true)} 
+        user={user ?? null}
+        onLoginClick={() => setIsLoginOpen(true)}
         onLogoClick={resetToInitialView}
         onLogout={handleLogout}
         onProfileClick={() => setIsProfileOpen(true)}
-        user={user || null}
       />
 
-      <main className={cn("pt-24 relative overflow-hidden bg-blue-50")}>
-        <div className={cn("max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative")}>
+      <main className="pt-24 relative overflow-hidden bg-blue-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {isInitialView && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className={cn("flex flex-col items-center justify-center")}>
-              <div className={cn("text-center mb-12 max-w-2xl mx-auto")}>
-                <motion.h1 
-                  className={cn("text-5xl md:text-6xl font-bold mb-6")}>
-                  <motion.span>
-                    <span className="text-[#4169E1]">Smidigt.</span>{" "}
-                    <span className="text-[#9333EA]">Smart.</span>{" "}
-                    <span className="text-[#4169E1]">Smidra.</span>
-                  </motion.span>
-                  <motion.span className="block mt-6 text-3xl md:text-4xl text-gray-800">
-                    Skapa CV som öppnar dörrar
-                  </motion.span>
-                </motion.h1>
-                
-                <motion.p 
-                  className={cn("text-lg md:text-xl text-gray-600 mt-4")}>
-                  Hitta de bästa jobben som matchar din profil
-                </motion.p>
-              </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center"
+            >
+              <h1 className="flex flex-col items-center justify-center">
+                <motion.span
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                  className="text-5xl md:text-6xl font-bold"
+                >
+                  <span className="text-[#4169E1]">Smidigt.</span>{' '}
+                  <span className="text-[#9333EA]">Smart.</span>{' '}
+                  <span className="text-[#4169E1]">Smidra.</span>
+                </motion.span>
+                <motion.span
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  className="block mt-6 text-3xl md:text-4xl text-gray-800"
+                >
+                  Skapa CV som öppnar dörrar
+                </motion.span>
+              </h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                className="text-lg md:text-xl text-gray-600 mt-4"
+              >
+                Hitta de bästa jobben som matchar din profil
+              </motion.p>
 
-              <motion.div 
-                className={cn("w-full max-w-4xl mx-auto mb-16")}>
+              <div className="mt-8 max-w-4xl mx-auto">
                 <div className="bg-white/95 rounded-xl border border-gray-200/50 shadow-lg hover:shadow-xl transition-shadow">
                   <form onSubmit={(e) => {
                     e.preventDefault();
-                    console.log('Form submitted on start page');
-                    const input = searchInputRef.current?.value || '';
-                    console.log('Search input from start page:', input);
-                    if (input.trim() || location.trim()) {
-                      console.log('Setting searchKeyword:', input);
-                      setSearchKeyword(input);
-                      handleSearch();  
-                    }
-                  }} className={cn("p-3 sm:p-4")}>
-                    <div className="flex flex-col gap-3">
-                      {/* AI Mode Toggle - Mobile */}
-                      <div className="flex sm:hidden justify-end">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsAiMode(!isAiMode);
-                            if (!isAiMode) {
-                              setLocation('');
-                            }
-                          }}
-                          className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all", {
-                            "bg-blue-100 text-blue-600": isAiMode,
-                            "bg-gray-100 text-gray-600": !isAiMode
-                          })}
-                        >
-                          <Zap className="w-3.5 h-3.5" />
-                          <span>AI-sökning</span>
-                        </button>
-                      </div>
-
-                      {/* Search Input */}
+                    handleSearch();
+                  }} className="p-3 sm:p-4">
+                    <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-col sm:flex-row gap-2">
                           <div className="relative flex-1">
@@ -245,16 +243,14 @@ export default function JobSearch() {
                             <input
                               ref={searchInputRef}
                               type="text"
-                              value={searchKeyword}
-                              onChange={(e) => setSearchKeyword(e.target.value)}
                               placeholder={isAiMode 
                                 ? aiSearchExamples[currentPlaceholder]
                                 : "Sök efter roll eller kompetens"}
-                              className={cn("w-full pl-10 pr-3 py-3 text-gray-900 placeholder-gray-500 border-0 focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 rounded-lg transition-all text-base sm:text-sm")}
+                              className="w-full pl-10 pr-3 py-3 text-gray-900 placeholder-gray-500 border-0 focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 rounded-lg transition-all text-base"
                               disabled={isLoading}
                             />
                           </div>
-                          
+
                           {!isAiMode && (
                             <div className="relative flex-1">
                               <MapPin className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -263,13 +259,13 @@ export default function JobSearch() {
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
                                 placeholder="Plats"
-                                className={cn("w-full pl-10 pr-3 py-3 text-gray-900 placeholder-gray-500 border-0 focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 rounded-lg transition-all text-sm")}
+                                className="w-full pl-10 pr-3 py-3 text-gray-900 placeholder-gray-500 border-0 focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 rounded-lg transition-all text-base"
                                 disabled={isLoading}
                               />
                             </div>
                           )}
-                          
-                          <div className="flex items-center gap-2">
+
+                          <div className="hidden sm:flex gap-2">
                             <button
                               type="button"
                               onClick={() => {
@@ -278,71 +274,84 @@ export default function JobSearch() {
                                   setLocation('');
                                 }
                               }}
-                              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap", {
+                              className={cn("flex items-center justify-center gap-1.5 px-4 py-3 rounded-lg text-sm font-medium transition-all h-full", {
                                 "bg-blue-100 text-blue-600": isAiMode,
-                                "bg-gray-100 text-gray-600": !isAiMode
+                                "bg-gray-100 text-gray-600 hover:bg-gray-200": !isAiMode
                               })}
                             >
-                              <Zap className="w-3.5 h-3.5" />
+                              <Zap className="w-4 h-4" />
                               <span>AI-sökning</span>
                             </button>
                             
                             <button 
                               type="submit"
-                              className={cn("flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium whitespace-nowrap min-w-[100px]")}
+                              onClick={handleSearch}
+                              disabled={isLoading}
+                              className={cn(
+                                "px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg",
+                                "hover:from-blue-700 hover:to-blue-800 transition-all duration-200",
+                                "font-medium text-base shadow-md hover:shadow-lg",
+                                "disabled:opacity-50 disabled:cursor-not-allowed",
+                                "flex items-center justify-center gap-2"
+                              )}
                             >
                               {isLoading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <>
+                                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  <span>Söker...</span>
+                                </>
                               ) : (
                                 <>
                                   <Search className="w-5 h-5" />
-                                  <span>Sök</span>
+                                  <span>Sök jobb</span>
                                 </>
                               )}
                             </button>
                           </div>
                         </div>
 
-                        <div className="flex sm:hidden gap-2">
-                          {!isAiMode ? (
-                            <>
-                              <div className="relative flex-1">
-                                <MapPin className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                                <input
-                                  type="text"
-                                  placeholder="Plats"
-                                  value={location}
-                                  onChange={(e) => setLocation(e.target.value)}
-                                  className={cn("w-full pl-10 pr-3 py-3 text-gray-900 placeholder-gray-500 border-0 focus:outline-none focus:ring-2 focus:ring-blue-200 bg-gray-50 rounded-lg transition-all text-base")}
-                                  disabled={isLoading}
-                                />
-                              </div>
-                              
-                              <button 
-                                type="submit"
-                                className={cn("flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium")}
-                              >
-                                {isLoading ? (
-                                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                  <Search className="w-5 h-5" />
-                                )}
-                              </button>
-                            </>
-                          ) : (
-                            <div className="flex w-full justify-end">
-                              <button 
-                                type="submit"
-                                className={cn("flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium")}
-                              >
-                                {isLoading ? (
-                                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                  <Search className="w-5 h-5" />
-                                )}
-                              </button>
-                            </div>
-                          )}
+                        <div className="flex flex-col sm:hidden gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAiMode(!isAiMode);
+                              if (!isAiMode) {
+                                setLocation('');
+                              }
+                            }}
+                            className={cn("w-full flex items-center justify-center gap-1.5 px-4 py-3 rounded-lg text-sm font-medium transition-all", {
+                              "bg-blue-100 text-blue-600": isAiMode,
+                              "bg-gray-100 text-gray-600 hover:bg-gray-200": !isAiMode
+                            })}
+                          >
+                            <Zap className="w-4 h-4" />
+                            <span>AI-sökning</span>
+                          </button>
+                          
+                          <button 
+                            type="button"
+                            onClick={handleSearch}
+                            disabled={isLoading}
+                            className={cn(
+                              "w-full px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg",
+                              "hover:from-blue-700 hover:to-blue-800 transition-all duration-200",
+                              "font-medium text-base shadow-md hover:shadow-lg",
+                              "disabled:opacity-50 disabled:cursor-not-allowed",
+                              "flex items-center justify-center gap-2"
+                            )}
+                          >
+                            {isLoading ? (
+                              <>
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Söker...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Search className="w-5 h-5" />
+                                <span>Sök jobb</span>
+                              </>
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -376,16 +385,15 @@ export default function JobSearch() {
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
 
-              {/* Lägg till RecommendedJobs här */}
-              <div className={cn("mt-8")}>
+              {/* Rekommenderade jobb */}
+              <div className="mt-16">
                 <RecommendedJobs 
                   onCreateCoverLetter={handleCreateCoverLetter}
                   onCreateCV={handleCreateCV}
                 />
               </div>
-
             </motion.div>
           )}
 

@@ -1,24 +1,42 @@
-import { useState } from 'react';
-import { User } from 'firebase/auth';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Zap, UserCircle2 } from 'lucide-react';
+import { Menu, UserCircle2, X, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface HeaderProps {
+  user: any;
   onLoginClick: () => void;
-  onLogoClick: () => void;
   onLogout: () => void;
+  onLogoClick: () => void;
   onProfileClick: () => void;
-  user: User | null;
 }
 
-export default function Header({ onLoginClick, onLogoClick, onLogout, onProfileClick, user }: HeaderProps) {
+export default function Header({
+  user,
+  onLoginClick,
+  onLogout,
+  onLogoClick,
+  onProfileClick,
+}: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Stäng menyn när användaren ändras (loggar in/ut)
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [user]);
+
+  const buttonClasses = {
+    primary: "px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium",
+    secondary: "px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors",
+    icon: "flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors",
+    toggle: "p-2 text-gray-500 hover:text-gray-700 transition-colors",
+  };
 
   return (
     <nav className="fixed w-full z-50 bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div 
+          {/* Logo */}
+          <div
             className="flex items-center cursor-pointer"
             onClick={onLogoClick}
           >
@@ -27,65 +45,51 @@ export default function Header({ onLoginClick, onLogoClick, onLogout, onProfileC
               Smidra
             </span>
           </div>
-          
-          <div className="hidden md:flex items-center justify-between w-full">
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center justify-end w-full">
             <div className="flex items-center space-x-4">
-              {!user && (
+              {user ? (
                 <>
-                  <button 
-                    onClick={onLoginClick}
-                    className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+                  <span className="text-sm text-gray-600">Välkommen {user.displayName}</span>
+                  <button
+                    onClick={onProfileClick}
+                    className={buttonClasses.secondary}
                   >
-                    Kom igång
+                    Min Profil
                   </button>
-                  <button 
-                    onClick={onLoginClick}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                  <button
+                    onClick={onLogout}
+                    className={buttonClasses.secondary}
                   >
-                    Logga in
+                    Logga ut
                   </button>
                 </>
+              ) : (
+                <button
+                  onClick={onLoginClick}
+                  className={buttonClasses.primary}
+                >
+                  Kom igång
+                </button>
               )}
             </div>
-
-            {user && (
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-600 font-medium">
-                  Välkommen, {user.displayName?.split(' ')[0]}!
-                </span>
-                <button 
-                  onClick={onProfileClick}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                >
-                  <UserCircle2 className="w-5 h-5" />
-                  Min Profil
-                </button>
-                <button 
-                  onClick={onLogout}
-                  className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-                >
-                  Logga ut
-                </button>
-              </div>
-            )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Mobile Profile Section */}
+          {/* Mobile Navigation */}
+          <div className="md:hidden flex items-center gap-2">
             {user ? (
               <>
-                <button 
+                <span className="text-sm font-medium text-gray-700 truncate max-w-[120px]">Hej {user.displayName?.split(' ')[0]}</span>
+                <button
                   onClick={onProfileClick}
-                  className="md:hidden flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
+                  className={buttonClasses.icon}
                 >
                   <UserCircle2 className="w-6 h-6 text-gray-600" />
                 </button>
-                <span className="md:hidden text-sm text-gray-500">
-                  Välkommen, <span className="font-medium text-gray-700">{user.displayName?.split(' ')[0]}</span>
-                </span>
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="md:hidden p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                  className={buttonClasses.toggle}
                 >
                   {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
@@ -93,14 +97,8 @@ export default function Header({ onLoginClick, onLogoClick, onLogout, onProfileC
             ) : (
               <>
                 <button
-                  onClick={onLoginClick}
-                  className="md:hidden px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                >
-                  Logga in
-                </button>
-                <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="md:hidden p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                  className={buttonClasses.toggle}
                 >
                   {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
@@ -109,73 +107,71 @@ export default function Header({ onLoginClick, onLogoClick, onLogout, onProfileC
           </div>
         </div>
 
+        {/* Mobile Menu */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="absolute right-4 top-[4.5rem] w-[280px] bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-16 left-0 w-full bg-white shadow-lg md:hidden"
             >
-              <div className="px-5 py-4 bg-gradient-to-br from-blue-500/5 via-blue-500/[0.02] to-transparent">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-medium shadow-sm">
-                      {user?.displayName?.charAt(0).toUpperCase() || 'U'}
+              {user ? (
+                <div className="divide-y divide-gray-100">
+                  {/* Profile Section */}
+                  <div className="p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <UserCircle2 className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {user.displayName}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-gray-500">Online</span>
+                      </div>
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900 truncate">
-                      {user?.displayName || 'User'}
-                    </div>
-                    <div className="text-sm text-gray-500 truncate">
-                      {user?.email}
-                    </div>
+
+                  {/* Actions Section */}
+                  <div className="p-4 space-y-3">
+                    <button
+                      onClick={onProfileClick}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <UserCircle2 className="w-5 h-5 text-gray-400" />
+                      Min Profil
+                    </button>
+                    <button
+                      onClick={onLogout}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                      </svg>
+                      Logga ut
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              <div className="p-2">
-                <button
-                  onClick={onProfileClick}
-                  className="w-full px-3 py-2.5 text-left hover:bg-blue-50 rounded-xl transition-all flex items-center gap-3 group"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <UserCircle2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-700 group-hover:text-blue-600">Min Profil</div>
-                    <div className="text-xs text-gray-500">Hantera din profil</div>
-                  </div>
-                </button>
-                
-                <button
-                  onClick={onLogout}
-                  className="w-full mt-1 px-3 py-2.5 text-left hover:bg-red-50 rounded-xl transition-all flex items-center gap-3 group"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-700 group-hover:text-red-600">Logga ut</div>
-                    <div className="text-xs text-gray-500">Avsluta din session</div>
-                  </div>
-                </button>
-              </div>
-
-              <div className="mt-2 px-4 py-3 bg-gradient-to-br from-gray-50 via-gray-50/50 to-transparent border-t border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs text-gray-500">Online</span>
-                  </div>
-                  <span className="text-xs text-gray-400">Smidra</span>
+              ) : (
+                <div className="p-4">
+                  <button
+                    onClick={onLoginClick}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium"
+                  >
+                    Kom igång
+                  </button>
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
