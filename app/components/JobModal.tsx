@@ -79,7 +79,6 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
           dominantLight: `${dominantColor}20`
         });
       } catch (error) {
-        console.error('Could not extract colors:', error);
         setColors({
           dominant: '#4F46E5',
           dominantLight: '#4F46E520'
@@ -88,7 +87,6 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
     };
 
     img.onerror = () => {
-      console.error('Could not load logotype');
       setShouldShowLogo(false);
       setColors({
         dominant: '#4F46E5',
@@ -251,18 +249,17 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
               }}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex items-center space-x-4">
-                    {job.logotype ? (
+                    {shouldShowLogo && job.logotype ? (
                       <NextImage 
                         src={job.logotype} 
-                        alt={`${job.company.name} logotyp`}
+                        alt={`${getCompanyName()} logotyp`}
                         width={48}
                         height={48}
                         className="rounded-lg w-12 h-12 object-contain bg-white"
                         style={{
                           boxShadow: colors ? `0 2px 4px ${colors.dominant}30` : undefined
                         }}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
+                        onError={() => {
                           setShouldShowLogo(false);
                           setColors({
                             dominant: '#4F46E5',
@@ -271,9 +268,9 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
                         }}
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center"
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center"
                            style={{
-                             background: colors ? `linear-gradient(135deg, ${colors.dominantLight}, white)` : undefined
+                             background: colors ? `linear-gradient(135deg, ${colors.dominantLight}, white)` : 'linear-gradient(135deg, #4F46E520, white)'
                            }}>
                         <Building2 className="w-6 h-6 text-gray-400" />
                       </div>

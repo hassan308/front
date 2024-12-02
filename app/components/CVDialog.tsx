@@ -55,6 +55,11 @@ const cvTemplates = [
   { id: 'template4', name: 'Professionell', preview: '/cv-templates/4.png', free: false },
 ];
 
+const templateOptions = [
+  { id: 'default', name: 'Standard CV' },
+  { id: 'modern', name: 'Modern CV' }
+];
+
 export default function CVDialog({ 
   isOpen, 
   onClose, 
@@ -79,7 +84,7 @@ export default function CVDialog({
     lastUpdated: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(cvTemplates[0].id);
+  const [selectedTemplate, setSelectedTemplate] = useState('default');
   const [generatedCVUrl, setGeneratedCVUrl] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -180,7 +185,7 @@ export default function CVDialog({
           ...userData,
           jobTitle: jobTitle,
           jobDescription: jobDescription,
-          template: selectedTemplate,
+          templateId: selectedTemplate,
         };
 
         const response = await fetch(API_ENDPOINTS.generateCV, {
@@ -501,64 +506,67 @@ export default function CVDialog({
                 </div>
 
                 {/* CV Templates */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Välj CV Mall</h3>
-                    <span className="text-sm text-gray-500">Välj en mall för ditt CV</span>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
+                  <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("default")}>
+                    <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "default" ? 'ring-2 ring-blue-500' : ''}`}>
+                      <Image
+                        src="/cv-templates/1.png"
+                        alt="Standard CV Template"
+                        width={250}
+                        height={354}
+                        className="w-full h-auto"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
+                    </div>
+                    <div className="mt-2 text-center">
+                      <h3 className="font-medium">Standard</h3>
+                      {selectedTemplate === "default" && (
+                        <span className="text-blue-500 text-sm">Vald</span>
+                      )}
+                    </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {cvTemplates.map((template) => (
-                      <div
-                        key={template.id}
-                        className={cn(
-                          "relative aspect-[210/297] rounded-lg border-2 cursor-pointer overflow-hidden",
-                          selectedTemplate === template.id
-                            ? "border-blue-600 shadow-md"
-                            : "border-gray-200 hover:border-gray-300",
-                          !template.free && "opacity-75"
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (template.free) {
-                            setSelectedTemplate(template.id);
-                          }
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onMouseUp={(e) => e.stopPropagation()}
-                        onPointerUp={(e) => e.stopPropagation()}
-                      >
+
+                  <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("modern")}>
+                    <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "modern" ? 'ring-2 ring-blue-500' : ''}`}>
+                      <Image
+                        src="/cv-templates/2.png"
+                        alt="Modern CV Template"
+                        width={250}
+                        height={354}
+                        className="w-full h-auto"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
+                    </div>
+                    <div className="mt-2 text-center">
+                      <h3 className="font-medium">Modern</h3>
+                      {selectedTemplate === "modern" && (
+                        <span className="text-blue-500 text-sm">Vald</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {[3, 4].map((index) => (
+                    <div key={index} className="relative opacity-60 cursor-not-allowed">
+                      <div className="relative rounded-lg overflow-hidden">
                         <Image
-                          src={template.preview}
-                          alt={template.name}
-                          fill
-                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 20vw"
-                          className="object-contain p-1"
-                          priority
+                          src={`/cv-templates/${index}.png`}
+                          alt="Coming Soon Template"
+                          width={250}
+                          height={354}
+                          className="w-full h-auto"
                         />
-                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/50 to-transparent p-2">
-                          <p className="text-sm text-white text-center font-medium">
-                            {template.name}
-                          </p>
+                        <div className="absolute inset-0 bg-black bg-opacity-20" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-full text-sm font-medium">
+                            Kommer snart
+                          </span>
                         </div>
-                        {selectedTemplate === template.id && (
-                          <div className="absolute inset-0 bg-blue-600/10 flex items-center justify-center">
-                            <Check className="w-6 h-6 text-blue-600" />
-                          </div>
-                        )}
-                        {!template.free && (
-                          <div className="absolute top-2 right-2">
-                            <div className="bg-blue-600 px-2 py-0.5 rounded text-xs text-white font-medium flex items-center gap-1">
-                              <Lock className="w-3 h-3" />
-                              PRO
-                            </div>
-                          </div>
-                        )}
                       </div>
-                    ))}
-                  </div>
+                      <div className="mt-2 text-center">
+                        <h3 className="font-medium text-gray-500">Mall {index - 1}</h3>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
