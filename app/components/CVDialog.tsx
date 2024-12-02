@@ -49,15 +49,16 @@ interface UserData {
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 const cvTemplates = [
-  { id: 'template1', name: 'Klassisk', preview: '/cv-templates/2.png', free: true },
-  { id: 'template2', name: 'Modern', preview: '/cv-templates/1.png', free: false },
-  { id: 'template3', name: 'Kreativ', preview: '/cv-templates/3.png', free: false },
-  { id: 'template4', name: 'Professionell', preview: '/cv-templates/4.png', free: false },
+  { id: 'template1', name: 'Klassisk', thumbnail: '/cv-templates/2.png', description: 'En klassisk CV-mall som passar de flesta.', free: true },
+  { id: 'template2', name: 'Modern', thumbnail: '/cv-templates/1.png', description: 'En modern CV-mall som ger ett professionellt intryck.', free: false },
+  { id: 'template3', name: 'Kreativ', thumbnail: '/cv-templates/3.png', description: 'En kreativ CV-mall som ger utrymme för personlighet.', free: false },
+  { id: 'template4', name: 'Professionell', thumbnail: '/cv-templates/4.png', description: 'En professionell CV-mall som passar för chefer och ledare.', free: false },
 ];
 
 const templateOptions = [
-  { id: 'default', name: 'Standard CV' },
-  { id: 'modern', name: 'Modern CV' }
+  { id: 'default', name: 'CV Mall 1' },
+  { id: 'modern', name: 'CV Mall 2' },
+  { id: 'creative', name: 'CV Mall 3' }
 ];
 
 export default function CVDialog({ 
@@ -506,67 +507,69 @@ export default function CVDialog({
                 </div>
 
                 {/* CV Templates */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
-                  <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("default")}>
-                    <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "default" ? 'ring-2 ring-blue-500' : ''}`}>
-                      <Image
-                        src="/cv-templates/1.png"
-                        alt="Standard CV Template"
-                        width={250}
-                        height={354}
-                        className="w-full h-auto"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
-                    </div>
-                    <div className="mt-2 text-center">
-                      <h3 className="font-medium">Standard</h3>
-                      {selectedTemplate === "default" && (
-                        <span className="text-blue-500 text-sm">Vald</span>
-                      )}
-                    </div>
-                  </div>
-
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4">
                   <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("modern")}>
-                    <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "modern" ? 'ring-2 ring-blue-500' : ''}`}>
+                    <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "modern" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
                       <Image
                         src="/cv-templates/2.png"
-                        alt="Modern CV Template"
-                        width={250}
-                        height={354}
-                        className="w-full h-auto"
+                        alt="CV Mall 2"
+                        width={300}
+                        height={424}
+                        className="w-full h-auto transform transition-transform duration-300 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                    <div className="mt-2 text-center">
-                      <h3 className="font-medium">Modern</h3>
+                    <div className="mt-3 text-center">
+                      <h3 className="font-medium text-lg">CV Mall 2</h3>
                       {selectedTemplate === "modern" && (
-                        <span className="text-blue-500 text-sm">Vald</span>
+                        <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
+                          <Check className="w-4 h-4" />
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  {[3, 4].map((index) => (
-                    <div key={index} className="relative opacity-60 cursor-not-allowed">
-                      <div className="relative rounded-lg overflow-hidden">
-                        <Image
-                          src={`/cv-templates/${index}.png`}
-                          alt="Coming Soon Template"
-                          width={250}
-                          height={354}
-                          className="w-full h-auto"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-20" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-full text-sm font-medium">
-                            Kommer snart
-                          </span>
+                  <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("creative")}>
+                    <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "creative" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
+                      <Image
+                        src="/cv-templates/3.png"
+                        alt="CV Mall 3"
+                        width={300}
+                        height={424}
+                        className="w-full h-auto transform transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                    <div className="mt-3 text-center">
+                      <h3 className="font-medium text-lg">CV Mall 3</h3>
+                      {selectedTemplate === "creative" && (
+                        <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
+                          <Check className="w-4 h-4" />
                         </div>
-                      </div>
-                      <div className="mt-2 text-center">
-                        <h3 className="font-medium text-gray-500">Mall {index - 1}</h3>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="relative opacity-60 cursor-not-allowed">
+                    <div className="relative rounded-lg overflow-hidden">
+                      <Image
+                        src="/cv-templates/4.png"
+                        alt="Coming Soon Template"
+                        width={300}
+                        height={424}
+                        className="w-full h-auto"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-20" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-full text-sm font-medium">
+                          Kommer snart
+                        </span>
                       </div>
                     </div>
-                  ))}
+                    <div className="mt-3 text-center">
+                      <h3 className="font-medium text-lg text-gray-500">Mall 4</h3>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -579,110 +582,51 @@ export default function CVDialog({
                   <span>Ditt CV kommer att genereras automatiskt</span>
                 </div>
                 <div className="flex gap-3">
-                  {generatedCVUrl ? (
-                    <div className="space-y-4 w-full">
-                      <div className="relative">
-                        <div className={cn(
-                          "absolute inset-0 flex items-center justify-center transition-all duration-500",
-                          isCreatingCV ? "opacity-100 scale-100" : "opacity-0 scale-0"
-                        )}>
-                          <div className="w-8 h-8 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            window.open(generatedCVUrl, '_blank');
-                          }}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onMouseUp={(e) => e.stopPropagation()}
-                          onPointerUp={(e) => e.stopPropagation()}
-                          className={cn(
-                            "w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-500",
-                            isCreatingCV 
-                              ? "opacity-0 scale-95 translate-y-2" 
-                              : "opacity-100 scale-100 translate-y-0 hover:scale-[1.02] active:scale-[0.98]"
-                          )}
-                        >
-                          <div className="flex items-center justify-center space-x-2 px-4 py-2">
-                            <ExternalLink className="h-4 w-4" />
-                            <span>Öppna CV</span>
-                          </div>
-                        </Button>
-                      </div>
-                      
-                      <div className={cn(
-                        "flex flex-col space-y-3 transition-all duration-500 transform",
-                        showInfo 
-                          ? "opacity-100 translate-y-0" 
-                          : "opacity-0 translate-y-4"
-                      )}>
-                        <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                          <div className="mt-1 text-blue-500">
-                            <Shield className="h-4 w-4" />
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium text-gray-900">Säker hantering:</span> Ditt CV sparas lokalt på din enhet och lagras inte i våra system.
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                          <div className="mt-1 text-blue-500">
-                            <Edit className="h-4 w-4" />
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium text-gray-900">Redigerbar:</span> När CV:t öppnas i nästa flik kan du enkelt anpassa och redigera innehållet efter dina önskemål.
-                          </p>
-                        </div>
-
-                        <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                          <div className="mt-1 text-blue-500">
-                            <Download className="h-4 w-4" />
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium text-gray-900">Ladda ner:</span> Spara ditt CV som PDF eller dela det direkt med arbetsgivaren.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button 
-                      type="button"
-                      className={cn(
-                        "w-full sm:w-auto relative bg-gradient-to-r text-white shadow-lg transition-all duration-300",
-                        isCreatingCV 
-                          ? "from-blue-400 to-blue-500 cursor-wait" 
-                          : "from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                      )}
-                      disabled={isCreatingCV}
-                      onClick={handleCreateCV}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onMouseUp={(e) => e.stopPropagation()}
-                      onPointerUp={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-center min-h-[28px] px-4 py-2 relative">
+                  {!generatedCVUrl ? (
+                    <div className="mt-4 flex justify-end space-x-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsCreatingCV(false);
+                          onClose();
+                        }}
+                        className="w-32"
+                      >
+                        Avbryt
+                      </Button>
+                      <Button
+                        onClick={handleCreateCV}
+                        disabled={isCreatingCV || isSubmitting}
+                        className="w-32 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
+                      >
                         {isCreatingCV ? (
-                          <div className="flex items-center space-x-3">
-                            <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                            <div className="flex flex-col items-start">
-                              <span className="text-sm font-medium whitespace-nowrap">{loadingText}</span>
-                              <span className="text-[10px] text-white/80 whitespace-nowrap">Det kan ta någon minut...</span>
-                            </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="animate-pulse">{loadingText || 'Skapar...'}</span>
                           </div>
                         ) : (
-                          <div className="flex items-center space-x-2">
-                            <FileText className="h-4 w-4" />
-                            <span>Skapa CV</span>
-                          </div>
+                          'Skapa CV'
                         )}
-                      </div>
-                      {isCreatingCV && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-blue-500/10 animate-pulse rounded-md pointer-events-none" />
-                      )}
-                    </Button>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end space-x-4 mt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setGeneratedCVUrl(null);
+                          setIsCreatingCV(false);
+                        }}
+                        className="w-32"
+                      >
+                        Tillbaka
+                      </Button>
+                      <Button
+                        onClick={() => window.open(generatedCVUrl, '_blank')}
+                        className="w-48 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
+                      >
+                        Öppna CV
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
