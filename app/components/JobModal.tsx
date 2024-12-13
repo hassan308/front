@@ -25,6 +25,7 @@ import { Dialog, DialogContent } from '../../components/ui/dialog';
 import cn from 'classnames';
 import { FastAverageColor } from 'fast-average-color';
 import CVDialog from './CVDialog';
+import CoverLetterDialog from './CoverLetterDialog';
 
 interface ModalColors {
   dominant: string;
@@ -45,6 +46,7 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
   const [isVisible, setIsVisible] = useState(true);
   const [shouldShowLogo, setShouldShowLogo] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isCoverLetterDialogOpen, setIsCoverLetterDialogOpen] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -124,9 +126,10 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
       const target = event.target as HTMLElement;
       const modal = document.getElementById('job-modal-content');
       const cvDialog = document.getElementById('cv-dialog');
+      const coverLetterDialog = document.getElementById('cover-letter-dialog');
       
-      // Don't close if click is inside CV dialog
-      if (cvDialog?.contains(target)) {
+      // Don't close if click is inside any of the dialogs
+      if (cvDialog?.contains(target) || coverLetterDialog?.contains(target)) {
         return;
       }
       
@@ -160,6 +163,10 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
     }
   };
 
+  const handleCreateCoverLetter = () => {
+    setIsCoverLetterDialogOpen(true);
+  };
+
   useEffect(() => {
     if (showCVDialog) {
     }
@@ -188,7 +195,7 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
       <div 
         className={cn(
           "fixed inset-0 z-50",
-          showCVDialog ? "hidden" : "flex items-center justify-center p-4"
+          showCVDialog || isCoverLetterDialogOpen ? "hidden" : "flex items-center justify-center p-4"
         )}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
@@ -197,7 +204,7 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
         }}
       >
         {/* Overlay */}
-        <div className="fixed inset-0 bg-black/60" />
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
         
         {/* Modal Content */}
         <div
@@ -474,17 +481,19 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
               <div className="relative flex-1">
                 <Button
                   type="button"
-                  className="w-full bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100 group"
-                  disabled
+                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-sm transition-all duration-200 group"
+                  onClick={handleCreateCoverLetter}
                 >
                   <div className="flex items-center justify-between w-full relative px-4 py-2">
                     <div className="flex items-center">
                       <Send className="mr-2 h-4 w-4" />
                       <span>Personligt brev</span>
                     </div>
-                    <div className="ml-3 bg-gradient-to-r from-blue-400/80 to-blue-500/80 text-white text-[10px] font-medium px-2 py-0.5 rounded-full tracking-wide">
-                      KOMMER SNART
-                    </div>
+                    {isMobile && (
+                      <div className="ml-3 bg-gradient-to-r from-white/10 to-white/20 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full border border-white/20 tracking-wide transition-all duration-200 group-hover:bg-white/30">
+                        BETA
+                      </div>
+                    )}
                   </div>
                 </Button>
               </div>
@@ -515,6 +524,16 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
           job={job}
         />
       )}
+
+      {/* CoverLetterDialog */}
+      <CoverLetterDialog 
+        isOpen={isCoverLetterDialogOpen}
+        onClose={() => setIsCoverLetterDialogOpen(false)}
+        jobTitle={job.title}
+        jobDescription={job.description}
+        logoUrl={job.logotype}
+        colors={colors || undefined}
+      />
     </>
   );
 }

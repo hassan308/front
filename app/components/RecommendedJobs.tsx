@@ -12,8 +12,6 @@ interface RecommendedJobsProps {
   onCreateCoverLetter: (job: Job) => void;
 }
 
-const popularSearches = ['Sjuksköterska', 'Systemutvecklare', 'Lärare', 'Undersköterska']
-
 export default function RecommendedJobs({ onCreateCV, onCreateCoverLetter }: RecommendedJobsProps) {
   const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -76,6 +74,12 @@ export default function RecommendedJobs({ onCreateCV, onCreateCoverLetter }: Rec
     return () => clearInterval(interval);
   }, [recommendedJobs.length, isMobile]);
 
+  const handleCreateCoverLetter = () => {
+    if (selectedJob && onCreateCoverLetter) {
+      onCreateCoverLetter(selectedJob);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -133,7 +137,6 @@ export default function RecommendedJobs({ onCreateCV, onCreateCoverLetter }: Rec
                 key={job.id}
                 job={job}
                 onCreateCV={onCreateCV}
-                onCreateCoverLetter={onCreateCoverLetter}
                 onSelect={setSelectedJob}
                 isSelected={selectedJob?.id === job.id}
               />
@@ -149,7 +152,7 @@ export default function RecommendedJobs({ onCreateCV, onCreateCoverLetter }: Rec
             job={selectedJob}
             onClose={() => setSelectedJob(null)}
             onCreateCV={onCreateCV}
-            onCreateCoverLetter={onCreateCoverLetter}
+            onCreateCoverLetter={handleCreateCoverLetter}
           />
         )}
       </AnimatePresence>

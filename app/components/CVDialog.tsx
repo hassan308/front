@@ -279,22 +279,21 @@ export default function CVDialog({
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           {isSubmitting && (
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-md z-50 flex flex-col items-center justify-center">
-              <div className="relative w-24 h-24 mb-4">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#4169E1]/20 via-[#9333EA]/20 to-[#4169E1]/20 rounded-xl animate-pulse" />
-                <FileText className="w-24 h-24 text-[#4169E1]" />
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-semibold">
-                    <span className="text-[#4169E1]">Smidigt.</span>{' '}
-                    <span className="text-[#9333EA]">Smart.</span>{' '}
-                    <span className="text-[#4169E1]">Smidra.</span>
-                  </span>
+            <div className="h-full flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+              <div className="relative flex flex-col items-center p-8 rounded-2xl bg-white shadow-2xl">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+                  <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-transparent border-r-blue-600 animate-[spin_1.5s_linear_infinite]" />
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Loader2 className="h-5 w-5 animate-spin text-[#4169E1]" />
-                  <span>Skapar ditt CV...</span>
+                <div className="mt-6 text-lg font-medium text-gray-700">
+                  {loadingText || 'Skapar CV...'}
+                </div>
+                <div className="mt-2 text-sm text-gray-500 animate-pulse">
+                  Detta kan ta några sekunder
+                </div>
+                <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+                  <Shield className="h-4 w-4" />
+                  <span>All data lagras lokalt i din webbläsare</span>
                 </div>
               </div>
             </div>
@@ -308,23 +307,8 @@ export default function CVDialog({
               <div className="flex flex-col items-center gap-4">
                 <h3 className="text-2xl font-semibold text-gray-900">Ditt CV är klart!</h3>
                 <div className="relative">
-                  <div className={cn(
-                    "absolute inset-0 flex items-center justify-center transition-all duration-500",
-                    isCreatingCV ? "opacity-100 scale-100" : "opacity-0 scale-0"
-                  )}>
-                    <div className="w-8 h-8 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
-                  </div>
                   <Button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.open(generatedCVUrl, '_blank');
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onMouseUp={(e) => e.stopPropagation()}
-                    onPointerUp={(e) => e.stopPropagation()}
+                    onClick={() => window.open(generatedCVUrl, '_blank')}
                     className={cn(
                       "w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-500",
                       isCreatingCV 
@@ -430,205 +414,231 @@ export default function CVDialog({
 
             {/* Content area */}
             <div className="flex-1 overflow-y-auto">
-              <div className="p-4 sm:p-6 space-y-6">
-                {/* Personlig information */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="displayName">Namn</Label>
-                    <Input
-                      type="text"
-                      id="displayName"
-                      name="displayName"
-                      value={userData.displayName}
-                      onChange={handleInputChange}
-                      placeholder="Ditt namn"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-post</Label>
-                    <Input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={userData.email}
-                      onChange={handleInputChange}
-                      placeholder="Din e-postadress"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefon</Label>
-                    <Input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={userData.phone}
-                      onChange={handleInputChange}
-                      placeholder="Ditt telefonnummer"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="experience">Erfarenhet</Label>
-                    <Textarea
-                      id="experience"
-                      name="experience"
-                      value={userData.experience}
-                      onChange={handleInputChange}
-                      placeholder="Beskriv din relevanta erfarenhet"
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                </div>
-
-                {/* Textfält */}
-                <div className="space-y-4">
-                  {[
-                    { id: 'bio', label: 'Sammanfattning', rows: 3 },
-                    { id: 'skills', label: 'Färdigheter', rows: 3 },
-                    { id: 'education', label: 'Utbildning', rows: 3 },
-                    { id: 'certifications', label: 'Certifieringar', rows: 3 }
-                  ].map((field) => (
-                    <div key={field.id}>
-                      <Label htmlFor={field.id}>{field.label}</Label>
-                      <Textarea
-                        id={field.id}
-                        name={field.id}
-                        value={userData[field.id as keyof typeof userData] as string}
-                        onChange={handleInputChange}
-                        rows={field.rows}
-                        className="w-full resize-none"
-                      />
+              {isCreatingCV ? (
+                <div className="h-full flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+                  <div className="relative flex flex-col items-center p-8 rounded-2xl bg-white shadow-2xl">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+                      <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-transparent border-r-blue-600 animate-[spin_1.5s_linear_infinite]" />
                     </div>
-                  ))}
-                </div>
-
-                {/* CV Templates */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4">
-                  <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("modern")}>
-                    <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "modern" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
-                      <Image
-                        src="/cv-templates/2.png"
-                        alt="CV Mall 2"
-                        width={300}
-                        height={424}
-                        className="w-full h-auto transform transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="mt-6 text-lg font-medium text-gray-700">
+                      {loadingText || 'Skapar CV...'}
                     </div>
-                    <div className="mt-3 text-center">
-                      <h3 className="font-medium text-lg">CV Mall 2</h3>
-                      {selectedTemplate === "modern" && (
-                        <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
-                          <Check className="w-4 h-4" />
-                        </div>
-                      )}
+                    <div className="mt-2 text-sm text-gray-500 animate-pulse">
+                      Detta kan ta några sekunder
                     </div>
-                  </div>
-
-                  <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("creative")}>
-                    <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "creative" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
-                      <Image
-                        src="/cv-templates/3.png"
-                        alt="CV Mall 3"
-                        width={300}
-                        height={424}
-                        className="w-full h-auto transform transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                    <div className="mt-3 text-center">
-                      <h3 className="font-medium text-lg">CV Mall 3</h3>
-                      {selectedTemplate === "creative" && (
-                        <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
-                          <Check className="w-4 h-4" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="relative opacity-60 cursor-not-allowed">
-                    <div className="relative rounded-lg overflow-hidden">
-                      <Image
-                        src="/cv-templates/4.png"
-                        alt="Coming Soon Template"
-                        width={300}
-                        height={424}
-                        className="w-full h-auto"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-20" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-full text-sm font-medium">
-                          Kommer snart
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-3 text-center">
-                      <h3 className="font-medium text-lg text-gray-500">Mall 4</h3>
+                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+                      <Shield className="h-4 w-4" />
+                      <span>All data lagras lokalt i din webbläsare</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Footer med knappar */}
-            <div className="border-t border-gray-100 p-4 sm:p-6 bg-white flex-shrink-0">
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Info className="h-4 w-4" />
-                  <span>Ditt CV kommer att genereras automatiskt</span>
-                </div>
-                <div className="flex gap-3">
-                  {!generatedCVUrl ? (
-                    <div className="mt-4 flex justify-end space-x-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsCreatingCV(false);
-                          onClose();
-                        }}
-                        className="w-32"
-                      >
-                        Avbryt
-                      </Button>
-                      <Button
-                        onClick={handleCreateCV}
-                        disabled={isCreatingCV || isSubmitting}
-                        className="w-32 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
-                      >
-                        {isCreatingCV ? (
-                          <div className="flex items-center space-x-2">
-                            <span className="animate-pulse">{loadingText || 'Skapar...'}</span>
-                          </div>
-                        ) : (
-                          'Skapa CV'
-                        )}
-                      </Button>
+              ) : generatedCVUrl ? (
+                <div className="h-full flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+                  <div className="relative flex flex-col items-center p-8 rounded-2xl bg-white shadow-2xl">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                      <Check className="w-8 h-8 text-green-600" />
                     </div>
-                  ) : (
-                    <div className="flex justify-end space-x-4 mt-4">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">CV genererat!</h3>
+                    <p className="text-gray-600 mb-6 text-center">
+                      Ditt CV är nu klart att öppnas
+                    </p>
+                    <div className="flex gap-3">
                       <Button
                         variant="outline"
                         onClick={() => {
                           setGeneratedCVUrl(null);
                           setIsCreatingCV(false);
                         }}
-                        className="w-32"
                       >
-                        Tillbaka
+                        Skapa nytt
                       </Button>
                       <Button
                         onClick={() => window.open(generatedCVUrl, '_blank')}
-                        className="w-48 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
                       >
                         Öppna CV
                       </Button>
                     </div>
-                  )}
+                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+                      <Shield className="h-4 w-4" />
+                      <span>All data lagras lokalt i din webbläsare</span>
+                    </div>
+                  </div>
                 </div>
+              ) : (
+                <div className="p-4 sm:p-6 space-y-6">
+                  {/* Personlig information */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName">Namn</Label>
+                      <Input
+                        type="text"
+                        id="displayName"
+                        name="displayName"
+                        value={userData.displayName}
+                        onChange={handleInputChange}
+                        placeholder="Ditt namn"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-post</Label>
+                      <Input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={userData.email}
+                        onChange={handleInputChange}
+                        placeholder="Din e-postadress"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Telefon</Label>
+                      <Input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={userData.phone}
+                        onChange={handleInputChange}
+                        placeholder="Ditt telefonnummer"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="experience">Erfarenhet</Label>
+                      <Textarea
+                        id="experience"
+                        name="experience"
+                        value={userData.experience}
+                        onChange={handleInputChange}
+                        placeholder="Beskriv din relevanta erfarenhet"
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Textfält */}
+                  <div className="space-y-4">
+                    {[
+                      { id: 'bio', label: 'Sammanfattning', rows: 3 },
+                      { id: 'skills', label: 'Färdigheter', rows: 3 },
+                      { id: 'education', label: 'Utbildning', rows: 3 },
+                      { id: 'certifications', label: 'Certifieringar', rows: 3 }
+                    ].map((field) => (
+                      <div key={field.id}>
+                        <Label htmlFor={field.id}>{field.label}</Label>
+                        <Textarea
+                          id={field.id}
+                          name={field.id}
+                          value={userData[field.id as keyof typeof userData] as string}
+                          onChange={handleInputChange}
+                          rows={field.rows}
+                          className="w-full resize-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CV Templates */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4">
+                    <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("modern")}>
+                      <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "modern" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
+                        <Image
+                          src="/cv-templates/2.png"
+                          alt="CV Mall 2"
+                          width={300}
+                          height={424}
+                          className="w-full h-auto transform transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                      <div className="mt-3 text-center">
+                        <h3 className="font-medium text-lg">CV Mall 2</h3>
+                        {selectedTemplate === "modern" && (
+                          <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("creative")}>
+                      <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "creative" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
+                        <Image
+                          src="/cv-templates/3.png"
+                          alt="CV Mall 3"
+                          width={300}
+                          height={424}
+                          className="w-full h-auto transform transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                      <div className="mt-3 text-center">
+                        <h3 className="font-medium text-lg">CV Mall 3</h3>
+                        {selectedTemplate === "creative" && (
+                          <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative opacity-60 cursor-not-allowed">
+                      <div className="relative rounded-lg overflow-hidden">
+                        <Image
+                          src="/cv-templates/4.png"
+                          alt="Coming Soon Template"
+                          width={300}
+                          height={424}
+                          className="w-full h-auto"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-20" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="bg-black bg-opacity-75 text-white px-4 py-2 rounded-full text-sm font-medium">
+                            Kommer snart
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-3 text-center">
+                        <h3 className="font-medium text-lg text-gray-500">Mall 4</h3>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-100 p-4 sm:p-6 bg-white flex-shrink-0">
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Info className="h-4 w-4" />
+                  <span>Ditt CV kommer att genereras automatiskt</span>
+                </div>
+                {!generatedCVUrl && (
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsCreatingCV(false);
+                        onClose();
+                      }}
+                    >
+                      Avbryt
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={isCreatingCV || isLoading}
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
+                    >
+                      Skapa CV
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </form>
