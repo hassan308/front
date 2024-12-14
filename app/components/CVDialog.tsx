@@ -5,21 +5,35 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
+  DialogHeader,
 } from '../../components/ui/dialog';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
-import { auth, db } from '../firebase/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
-import { Loader2, Lock, ExternalLink, FileText, X, Check, Info, Building2, Shield, Edit, Download } from 'lucide-react';
+import { Loader2, Lock, ExternalLink, FileText, X, Check, Info, Building2, Shield, Edit, Download, ArrowUpRight } from 'lucide-react';
 import Image from 'next/image';
 import { API_ENDPOINTS } from '../config/api';
 import { cn } from '../lib/utils';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../firebase/firebaseConfig';
+import LoginDialog from './LoginDialog';
+import { signInWithPopup } from 'firebase/auth';
+import { googleProvider } from '../firebase/firebaseConfig';
+import { FcGoogle } from 'react-icons/fc';
+import { getAuth } from 'firebase/auth';
 
 interface ModalColors {
   dominant: string;
   dominantLight: string;
+}
+
+interface Job {
+  id: string;
+  title: string;
+  company: string | { name: string };
+  description: string;
+  // ... andra jobbegenskaper
 }
 
 interface CVDialogProps {
@@ -27,7 +41,6 @@ interface CVDialogProps {
   onClose: () => void;
   jobTitle: string;
   logoUrl?: string;
-  onLoginRequired?: () => void;
   jobDescription: string;
   colors?: ModalColors | null;
   job?: Job;
@@ -66,12 +79,12 @@ export default function CVDialog({
   onClose, 
   jobTitle, 
   logoUrl,
-  onLoginRequired,
   jobDescription,
   colors,
   job
 }: CVDialogProps) {
-
+  const [user] = useAuthState(auth);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [userData, setUserData] = useState<UserData>({
     displayName: '',
     email: '',
@@ -91,7 +104,7 @@ export default function CVDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingCV, setIsCreatingCV] = useState(false);
-  const [loadingText, setLoadingText] = useState('');
+  const [loadingText, setLoadingText] = useState('🔍 Analyserar jobbeskrivningen...');
   const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
@@ -105,33 +118,9 @@ export default function CVDialog({
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!auth.currentUser) {
-        onLoginRequired?.();
-        return;
-      }
-
-      const cachedData = localStorage.getItem('userData');
-      const now = Date.now();
-
+      const cachedData = localStorage.getItem('tempUserData');
       if (cachedData) {
-        const parsedData: UserData = JSON.parse(cachedData);
-        if (now - parsedData.lastUpdated < CACHE_DURATION) {
-          setUserData(parsedData);
-          return;
-        }
-      }
-
-      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      if (userDoc.exists()) {
-        const firebaseData = userDoc.data() as Omit<UserData, 'lastUpdated'>;
-        const newUserData = {
-          ...firebaseData,
-          displayName: auth.currentUser.displayName || '',
-          email: auth.currentUser.email || '',
-          lastUpdated: now,
-        };
-        setUserData(newUserData);
-        localStorage.setItem('userData', JSON.stringify(newUserData));
+        setUserData(JSON.parse(cachedData));
       }
     };
 
@@ -139,16 +128,15 @@ export default function CVDialog({
       setGeneratedCVUrl(null);
       fetchUserData();
     }
-  }, [isOpen, onLoginRequired, jobTitle]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isCreatingCV) {
       const texts = [
-        '🔍 Analyserar din profil...',
-        '📝 Skräddarsyr CV...',
-        '✨ Optimerar innehållet...',
-        '🎯 Anpassar efter tjänsten...',
-        '🚀 Nästan klar...'
+        '🔍 Analyserar jobbeskrivningen...',
+        '📝 Skapar CV...',
+        '✨ Anpassar innehållet...',
+        '🎯 Optimerar formuleringarna...'
       ];
       let currentIndex = 0;
 
@@ -163,7 +151,6 @@ export default function CVDialog({
 
   useEffect(() => {
     if (generatedCVUrl && !showInfo) {
-      // Vänta lite innan vi visar informationen för snyggare animation
       setTimeout(() => {
         setShowInfo(true);
       }, 600);
@@ -174,11 +161,36 @@ export default function CVDialog({
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!user) {
+      setIsLoginDialogOpen(true);
+      return;
+    }
+
     setIsSubmitting(true);
+    setIsCreatingCV(true);
     setError(null);
+
+    localStorage.setItem('tempUserData', JSON.stringify(userData));
 
     const maxRetries = 5;
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const texts = [
+      '🔍 Analyserar jobbeskrivningen...',
+      '📝 Skapar CV...',
+      '✨ Anpassar innehållet...',
+      '🎯 Optimerar formuleringarna...'
+    ];
+    let currentIndex = 0;
+
+    const updateLoadingText = () => {
+      setLoadingText(texts[currentIndex]);
+      currentIndex = (currentIndex + 1) % texts.length;
+    };
+
+    // Starta intervallet för att uppdatera laddningstexten
+    const loadingInterval = setInterval(updateLoadingText, 2000);
+    updateLoadingText(); // Sätt första texten direkt
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -202,16 +214,26 @@ export default function CVDialog({
             throw new Error('Kunde inte generera CV efter flera försök');
           }
           console.log(`Försök ${attempt} misslyckades, försöker igen...`);
-          await delay(1000); // Vänta 1 sekund mellan försök
+          await delay(1000);
           continue;
         }
 
+        // När vi får svaret, stoppa den roterande texten
+        clearInterval(loadingInterval);
+        setIsCreatingCV(false);
+
         const result = await response.json();
+        
+        // Visa "Nästan klart..." i exakt 2 sekunder
+        setLoadingText('🚀 Nästan klart...');
+        await delay(2000);
+        
         const blob = new Blob([result.html], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         setGeneratedCVUrl(url);
-        break; // Avbryt loop vid lyckat försök
+        break;
       } catch (err) {
+        clearInterval(loadingInterval); // Stoppa intervallet vid fel
         if (attempt === maxRetries) {
           console.error('CV generation error:', err);
           setError(err instanceof Error ? err.message : 'Ett oväntat fel uppstod');
@@ -219,10 +241,11 @@ export default function CVDialog({
           console.log(`Försök ${attempt} misslyckades med fel:`, err);
           await delay(1000);
         }
+      } finally {
+        setIsSubmitting(false);
+        setIsCreatingCV(false);
       }
     }
-
-    setIsSubmitting(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -237,9 +260,15 @@ export default function CVDialog({
   };
 
   const handleCreateCV = async () => {
+    if (!user) {
+      setIsLoginDialogOpen(true);
+      return;
+    }
+
     setIsCreatingCV(true);
     try {
-      await handleSubmit(new Event('submit'));
+      const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+      await handleSubmit(fakeEvent);
     } finally {
       setTimeout(() => {
         setIsCreatingCV(false);
@@ -247,118 +276,40 @@ export default function CVDialog({
     }
   };
 
-  if (!auth.currentUser) {
-    return null; 
-  }
+  const handleLoginSuccess = () => {
+    setIsLoginDialogOpen(false);
+    handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+  };
 
   return (
-    <div 
-      id="cv-dialog" 
-      className={cn(
-        "fixed inset-0 z-[100] flex items-center justify-center p-4",
-        !isOpen && "hidden"
+    <>
+      {/* Overlay när LoginDialog är öppen */}
+      {isLoginDialogOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200]" />
       )}
-      onClick={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          // Prevent any automatic closing
-          return;
+
+      {/* LoginDialog */}
+      <LoginDialog 
+        isOpen={isLoginDialogOpen}
+        onClose={() => {
+          setIsLoginDialogOpen(false);
+          if (user) {
+            handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+          }
         }}
-        modal={true}
+      />
+
+      {/* Main Dialog */}
+      <Dialog
+        open={isOpen && !isLoginDialogOpen}
+        onOpenChange={onClose}
       >
         <DialogContent 
           className="max-w-4xl w-full h-[90vh] sm:h-[calc(100vh-2rem)] flex flex-col overflow-hidden p-0 gap-0"
-          onClick={(e) => e.stopPropagation()}
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
         >
-          {isSubmitting && (
-            <div className="h-full flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
-              <div className="relative flex flex-col items-center p-8 rounded-2xl bg-white shadow-2xl">
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
-                  <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-transparent border-r-blue-600 animate-[spin_1.5s_linear_infinite]" />
-                </div>
-                <div className="mt-6 text-lg font-medium text-gray-700">
-                  {loadingText || 'Skapar CV...'}
-                </div>
-                <div className="mt-2 text-sm text-gray-500 animate-pulse">
-                  Detta kan ta några sekunder
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-                  <Shield className="h-4 w-4" />
-                  <span>All data lagras lokalt i din webbläsare</span>
-                </div>
-              </div>
-            </div>
-          )}
-          {generatedCVUrl && !isSubmitting && (
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-6 transition-all duration-500">
-              <div className="relative w-24 h-24">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#4169E1]/20 via-[#9333EA]/20 to-[#4169E1]/20 rounded-xl" />
-                <FileText className="w-24 h-24 text-[#4169E1]" />
-              </div>
-              <div className="flex flex-col items-center gap-4">
-                <h3 className="text-2xl font-semibold text-gray-900">Ditt CV är klart!</h3>
-                <div className="relative">
-                  <Button
-                    onClick={() => window.open(generatedCVUrl, '_blank')}
-                    className={cn(
-                      "w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-500",
-                      isCreatingCV 
-                        ? "opacity-0 scale-95 translate-y-2" 
-                        : "opacity-100 scale-100 translate-y-0 hover:scale-[1.02] active:scale-[0.98]"
-                    )}
-                  >
-                    <div className="flex items-center justify-center space-x-2 px-4 py-2">
-                      <ExternalLink className="h-4 w-4" />
-                      <span>Öppna CV</span>
-                    </div>
-                  </Button>
-                </div>
-                
-                <div className={cn(
-                  "flex flex-col space-y-3 transition-all duration-500 transform",
-                  showInfo 
-                    ? "opacity-100 translate-y-0" 
-                    : "opacity-0 translate-y-4"
-                )}>
-                  <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                    <div className="mt-1 text-blue-500">
-                      <Shield className="h-4 w-4" />
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium text-gray-900">Säker hantering:</span> Ditt CV sparas lokalt på din enhet och lagras inte i våra system.
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                    <div className="mt-1 text-blue-500">
-                      <Edit className="h-4 w-4" />
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium text-gray-900">Redigerbar:</span> När CV:t öppnas i nästa flik kan du enkelt anpassa och redigera innehållet efter dina önskemål.
-                    </p>
-                  </div>
-
-                  <div className="flex items-start space-x-2 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                    <div className="mt-1 text-blue-500">
-                      <Download className="h-4 w-4" />
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium text-gray-900">Ladda ner:</span> Spara ditt CV som PDF eller dela det direkt med arbetsgivaren.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
           <DialogTitle className="sr-only">
             Skapa CV för {jobTitle}
           </DialogTitle>
@@ -375,184 +326,82 @@ export default function CVDialog({
             <X className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
 
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            {/* Header */}
-            <div className="relative p-4 sm:p-6 border-b border-gray-100 flex-shrink-0" style={{
-              background: colors ? `linear-gradient(to bottom, ${colors.dominantLight}, transparent)` : undefined
-            }}>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                {(job?.logotype || logoUrl) ? (
-                  <div className="relative w-12 h-12 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
-                    <Image 
-                      src={job?.logotype || logoUrl || ''} 
-                      alt={`${jobTitle} logotyp`}
-                      fill
-                      sizes="(max-width: 640px) 48px, 64px"
-                      className="object-contain p-2"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-gray-100 flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-blue-500" />
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold text-gray-900 truncate mb-1">
-                    Skapa CV
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    för tjänsten {jobTitle}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Content area */}
-            <div className="flex-1 overflow-y-auto">
-              {isCreatingCV ? (
-                <div className="h-full flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
-                  <div className="relative flex flex-col items-center p-8 rounded-2xl bg-white shadow-2xl">
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
-                      <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-transparent border-r-blue-600 animate-[spin_1.5s_linear_infinite]" />
-                    </div>
-                    <div className="mt-6 text-lg font-medium text-gray-700">
-                      {loadingText || 'Skapar CV...'}
-                    </div>
-                    <div className="mt-2 text-sm text-gray-500 animate-pulse">
-                      Detta kan ta några sekunder
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-                      <Shield className="h-4 w-4" />
-                      <span>All data lagras lokalt i din webbläsare</span>
-                    </div>
-                  </div>
-                </div>
-              ) : generatedCVUrl ? (
-                <div className="h-full flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
-                  <div className="relative flex flex-col items-center p-8 rounded-2xl bg-white shadow-2xl">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                      <Check className="w-8 h-8 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">CV genererat!</h3>
-                    <p className="text-gray-600 mb-6 text-center">
-                      Ditt CV är nu klart att öppnas
-                    </p>
-                    <div className="flex gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setGeneratedCVUrl(null);
-                          setIsCreatingCV(false);
-                        }}
-                      >
-                        Skapa nytt
-                      </Button>
-                      <Button
-                        onClick={() => window.open(generatedCVUrl, '_blank')}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
-                      >
-                        Öppna CV
-                      </Button>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-                      <Shield className="h-4 w-4" />
-                      <span>All data lagras lokalt i din webbläsare</span>
-                    </div>
-                  </div>
+          {/* Header */}
+          <div className="relative p-4 sm:p-6 border-b border-gray-100 flex-shrink-0" style={{
+            background: colors ? `linear-gradient(to bottom, ${colors.dominantLight}, transparent)` : undefined
+          }}>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              {logoUrl ? (
+                <div className="relative w-12 h-12 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
+                  <Image 
+                    src={logoUrl} 
+                    alt={`${jobTitle} logotyp`}
+                    fill
+                    sizes="(max-width: 640px) 48px, 64px"
+                    className="object-contain p-2"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
                 </div>
               ) : (
-                <div className="p-4 sm:p-6 space-y-6">
-                  {/* Personlig information */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="displayName">Namn</Label>
-                      <Input
-                        type="text"
-                        id="displayName"
-                        name="displayName"
-                        value={userData.displayName}
-                        onChange={handleInputChange}
-                        placeholder="Ditt namn"
-                        required
-                      />
-                    </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-gray-100 flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-blue-500" />
+                </div>
+              )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="email">E-post</Label>
-                      <Input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={userData.email}
-                        onChange={handleInputChange}
-                        placeholder="Din e-postadress"
-                        required
-                      />
-                    </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-semibold text-gray-900 truncate mb-1">
+                  Skapar exempel CV
+                </h2>
+                <p className="text-sm text-gray-600">
+                  för tjänsten {jobTitle}
+                </p>
+              </div>
+            </div>
+          </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefon</Label>
-                      <Input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={userData.phone}
-                        onChange={handleInputChange}
-                        placeholder="Ditt telefonnummer"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="experience">Erfarenhet</Label>
-                      <Textarea
-                        id="experience"
-                        name="experience"
-                        value={userData.experience}
-                        onChange={handleInputChange}
-                        placeholder="Beskriv din relevanta erfarenhet"
-                        className="min-h-[100px]"
-                      />
-                    </div>
+          {/* Content area */}
+          <div className={cn(
+            "flex-1 relative overflow-y-auto",
+            generatedCVUrl && "overflow-hidden"
+          )}>
+            {isSubmitting ? (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center">
+                <div className="relative flex flex-col items-center p-8 rounded-2xl bg-white shadow-2xl">
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+                    <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-transparent border-r-blue-600 animate-[spin_1.5s_linear_infinite]" />
                   </div>
-
-                  {/* Textfält */}
-                  <div className="space-y-4">
-                    {[
-                      { id: 'bio', label: 'Sammanfattning', rows: 3 },
-                      { id: 'skills', label: 'Färdigheter', rows: 3 },
-                      { id: 'education', label: 'Utbildning', rows: 3 },
-                      { id: 'certifications', label: 'Certifieringar', rows: 3 }
-                    ].map((field) => (
-                      <div key={field.id}>
-                        <Label htmlFor={field.id}>{field.label}</Label>
-                        <Textarea
-                          id={field.id}
-                          name={field.id}
-                          value={userData[field.id as keyof typeof userData] as string}
-                          onChange={handleInputChange}
-                          rows={field.rows}
-                          className="w-full resize-none"
-                        />
-                      </div>
-                    ))}
+                  <div className="mt-6 text-lg font-medium text-gray-700">
+                    {loadingText}
                   </div>
-
+                  <div className="mt-2 text-sm text-gray-500 animate-pulse">
+                    Detta kan ta några sekunder
+                  </div>
+                </div>
+              </div>
+            ) : !generatedCVUrl && (
+              <div className="h-full flex flex-col">
+                {/* Original form content */}
+                <div className="flex-1 p-4 sm:p-6 space-y-6">
                   {/* CV Templates */}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-4">
-                    <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("modern")}>
-                      <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "modern" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
+                    <div 
+                      className="relative group cursor-pointer" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedTemplate("modern");
+                      }}
+                    >
+                      <div className={`relative rounded-lg overflow-hidden aspect-[3/4] ${selectedTemplate === "modern" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
                         <Image
                           src="/cv-templates/2.png"
                           alt="CV Mall 2"
-                          width={300}
-                          height={424}
-                          className="w-full h-auto transform transition-transform duration-300 group-hover:scale-105"
+                          fill
+                          className="object-contain object-top transform transition-transform duration-300 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
@@ -566,14 +415,20 @@ export default function CVDialog({
                       </div>
                     </div>
 
-                    <div className="relative group cursor-pointer" onClick={() => setSelectedTemplate("creative")}>
-                      <div className={`relative rounded-lg overflow-hidden ${selectedTemplate === "creative" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
+                    <div 
+                      className="relative group cursor-pointer" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedTemplate("creative");
+                      }}
+                    >
+                      <div className={`relative rounded-lg overflow-hidden aspect-[3/4] ${selectedTemplate === "creative" ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
                         <Image
                           src="/cv-templates/3.png"
                           alt="CV Mall 3"
-                          width={300}
-                          height={424}
-                          className="w-full h-auto transform transition-transform duration-300 group-hover:scale-105"
+                          fill
+                          className="object-contain object-top transform transition-transform duration-300 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
@@ -587,14 +442,19 @@ export default function CVDialog({
                       </div>
                     </div>
 
-                    <div className="relative opacity-60 cursor-not-allowed">
-                      <div className="relative rounded-lg overflow-hidden">
+                    <div 
+                      className="relative opacity-60 cursor-not-allowed"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                    >
+                      <div className="relative rounded-lg overflow-hidden aspect-[3/4]">
                         <Image
                           src="/cv-templates/4.png"
                           alt="Coming Soon Template"
-                          width={300}
-                          height={424}
-                          className="w-full h-auto"
+                          fill
+                          className="object-contain object-top"
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-20" />
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -609,41 +469,83 @@ export default function CVDialog({
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Footer */}
-            <div className="border-t border-gray-100 p-4 sm:p-6 bg-white flex-shrink-0">
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Info className="h-4 w-4" />
-                  <span>Ditt CV kommer att genereras automatiskt</span>
-                </div>
-                {!generatedCVUrl && (
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setIsCreatingCV(false);
-                        onClose();
-                      }}
-                    >
-                      Avbryt
-                    </Button>
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={isCreatingCV || isLoading}
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
-                    >
-                      Skapa CV
-                    </Button>
+                {/* Footer */}
+                <div className="border-t border-gray-100 p-4 sm:p-6 bg-white flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Info className="h-4 w-4" />
+                      <span>Ditt CV kommer att genereras automatiskt</span>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={onClose}
+                      >
+                        Avbryt
+                      </Button>
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md"
+                      >
+                        Skapa CV
+                      </Button>
+                    </div>
                   </div>
-                )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Success state */}
+          {generatedCVUrl && !isSubmitting && (
+            <div className="absolute top-[72px] sm:top-[88px] inset-x-0 bottom-0 flex flex-col items-center justify-center">
+              <div className="w-[400px] bg-white rounded-xl shadow-lg p-8 mx-auto text-center">
+                <div className="w-12 h-12 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-6 h-6 text-[#4CAF50]" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">CV genererat!</h3>
+                <p className="text-gray-600 text-sm mb-6">
+                  Ditt CV är nu klart att öppnas
+                </p>
+                <div className="flex flex-col items-start gap-2 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Edit className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                    <span>Detta är ett exempel-CV som du kan redigera lokalt</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Download className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                    <span>Du kan ladda ner CV:t när du är klar</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Shield className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                    <span>All data lagras lokalt i din webbläsare</span>
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setGeneratedCVUrl(null);
+                      setIsCreatingCV(false);
+                    }}
+                    className="flex-1"
+                  >
+                    Skapa nytt
+                  </Button>
+                  <Button
+                    onClick={() => window.open(generatedCVUrl, '_blank')}
+                    className="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8]"
+                  >
+                    Öppna CV
+                  </Button>
+                </div>
               </div>
             </div>
-          </form>
+          )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

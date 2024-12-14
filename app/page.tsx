@@ -161,10 +161,6 @@ export default function JobSearch() {
   };
 
   const handleCreateCV = (job: Job) => {
-    if (!user) {
-      setIsLoginOpen(true);
-      return;
-    }
     setSelectedJob(job);
     // Här kan du lägga till logik för att öppna CV dialog
     console.log('Creating CV for job:', job.title);

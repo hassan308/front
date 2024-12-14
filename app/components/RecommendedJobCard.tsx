@@ -89,7 +89,8 @@ export default function RecommendedJobCard({
     <>
       <motion.div
         className={cn(
-          "group relative bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer hover:scale-[1.02]"
+          "group relative bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer hover:scale-[1.02]",
+          "h-[420px]"
         )}
         onClick={() => onSelect(job)}
       >
@@ -116,10 +117,10 @@ export default function RecommendedJobCard({
 
         {/* Innehåll */}
         <div className={cn(
-          "relative"
+          "relative h-full flex flex-col"
         )}>
           <div className={cn(
-            "relative bg-white/80"
+            "relative bg-white/80 flex-1"
           )}>
             {/* Header med företagsinfo */}
             <div className={cn(
@@ -130,7 +131,7 @@ export default function RecommendedJobCard({
               )}>
                 {job.logotype ? (
                   <div className={cn(
-                    "relative w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 group-hover:shadow-md transition-shadow"
+                    "relative w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 group-hover:shadow-md transition-shadow flex-shrink-0"
                   )}>
                     <Image 
                       src={job.logotype} 
@@ -144,7 +145,7 @@ export default function RecommendedJobCard({
                   </div>
                 ) : (
                   <div className={cn(
-                    "w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-gray-100 flex items-center justify-center group-hover:shadow-md transition-shadow"
+                    "w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-gray-100 flex items-center justify-center group-hover:shadow-md transition-shadow flex-shrink-0"
                   )}>
                     <Building2 className={cn(
                       "w-6 h-6 sm:w-8 sm:h-8 text-blue-500"
@@ -156,41 +157,41 @@ export default function RecommendedJobCard({
                   "flex-1 min-w-0"
                 )}>
                   <h3 className={cn(
-                    "text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-2"
+                    "text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-2 text-left"
                   )}>
                     {job.title}
                   </h3>
                   <div className={cn(
-                    "flex flex-col gap-2"
+                    "flex flex-col gap-2 text-left w-full"
                   )}>
                     <div className={cn(
-                      "flex items-center gap-1.5 text-sm text-gray-600"
+                      "flex items-start gap-1.5 text-sm text-gray-600 w-full"
                     )}>
                       <Building2 className={cn(
-                        "w-4 h-4 text-blue-500 flex-shrink-0"
+                        "w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5"
                       )} />
                       <span className={cn(
-                        "truncate"
+                        "truncate text-left flex-1"
                       )}>{job.company.name}</span>
                     </div>
                     <div className={cn(
-                      "flex items-center gap-1.5 text-sm text-gray-600"
+                      "flex items-start gap-1.5 text-sm text-gray-600 w-full"
                     )}>
                       <MapPin className={cn(
-                        "w-4 h-4 text-blue-500 flex-shrink-0"
+                        "w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5"
                       )} />
                       <span className={cn(
-                        "truncate"
+                        "truncate text-left flex-1"
                       )}>{job.workplace?.municipality || 'Plats ej angiven'}</span>
                     </div>
                     <div className={cn(
-                      "flex items-center gap-1.5 text-sm text-gray-600"
+                      "flex items-start gap-1.5 text-sm text-gray-600 w-full"
                     )}>
                       <Briefcase className={cn(
-                        "w-4 h-4 text-blue-500 flex-shrink-0"
+                        "w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5"
                       )} />
                       <span className={cn(
-                        "truncate"
+                        "truncate text-left flex-1"
                       )}>{job.employmentType}</span>
                     </div>
                   </div>
@@ -199,34 +200,34 @@ export default function RecommendedJobCard({
 
               {/* Kort beskrivning */}
               <div className={cn(
-                "mt-4 text-sm text-gray-600 line-clamp-3"
+                "mt-4 text-sm text-gray-600 line-clamp-3 text-left w-full"
               )}>
                 <div dangerouslySetInnerHTML={{ __html: job.description || 'Ingen beskrivning tillgänglig.' }} />
               </div>
 
               {/* Badges */}
               <div className={cn(
-                "flex flex-wrap gap-2 mt-4"
+                "flex flex-wrap gap-2 mt-4 justify-start w-full"
               )}>
                 {job.salaryType && (
                   <div className={cn(
-                    "bg-blue-50 px-2.5 py-1 rounded-full text-xs font-medium text-blue-700 border border-blue-100"
+                    "inline-flex items-start px-2.5 py-1 rounded-full text-xs font-medium text-blue-700 border border-blue-100 bg-blue-50"
                   )}>
-                    {job.salaryType}
+                    <span className="text-left">{job.salaryType}</span>
                   </div>
                 )}
                 {job.positions > 1 && (
                   <div className={cn(
-                    "bg-green-50 px-2.5 py-1 rounded-full text-xs font-medium text-green-700 border border-green-100"
+                    "inline-flex items-start px-2.5 py-1 rounded-full text-xs font-medium text-green-700 border border-green-100 bg-green-50"
                   )}>
-                    {job.positions} tjänster
+                    <span className="text-left">{job.positions} tjänster</span>
                   </div>
                 )}
                 {job.duration && (
                   <div className={cn(
-                    "bg-purple-50 px-2.5 py-1 rounded-full text-xs font-medium text-purple-700 border border-purple-100"
+                    "inline-flex items-start px-2.5 py-1 rounded-full text-xs font-medium text-purple-700 border border-purple-100 bg-purple-50"
                   )}>
-                    {job.duration}
+                    <span className="text-left">{job.duration}</span>
                   </div>
                 )}
               </div>
@@ -234,15 +235,15 @@ export default function RecommendedJobCard({
 
             {/* Footer med deadline och knapp */}
             <div className={cn(
-              "mt-3 pt-3 border-t border-gray-100 px-4 sm:px-6 pb-4 sm:pb-6"
+              "absolute bottom-0 left-0 right-0 mt-3 pt-3 border-t border-gray-100 px-4 sm:px-6 pb-4 sm:pb-6 bg-white"
             )}>
               <div className={cn(
-                "flex items-center gap-1.5 text-sm text-gray-600 mb-3"
+                "flex items-start gap-1.5 text-sm text-gray-600 mb-3 w-full"
               )}>
                 <Calendar className={cn(
-                  "w-4 h-4 text-red-500 flex-shrink-0"
+                  "w-4 h-4 text-red-500 flex-shrink-0 mt-0.5"
                 )} />
-                <span>Sista ansökningsdag: {job.lastApplicationDate ? formatDate(job.lastApplicationDate) : 'Ej angivet'}</span>
+                <span className="text-left flex-1">Sista ansökningsdag: {job.lastApplicationDate ? formatDate(job.lastApplicationDate) : 'Ej angivet'}</span>
               </div>
               <button 
                 onClick={() => onSelect(job)}
@@ -250,7 +251,7 @@ export default function RecommendedJobCard({
                   "w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-300 text-sm font-medium shadow-sm hover:shadow-md flex items-center justify-center gap-2 group-hover:scale-[1.02]"
                 )}
               >
-                Visa annons
+                <span className="text-center">Visa annons</span>
                 <ArrowRight className={cn(
                   "w-4 h-4 transition-transform group-hover:translate-x-1"
                 )} />

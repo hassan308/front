@@ -37,16 +37,16 @@ interface JobModalProps {
   onClose: () => void;
   onCreateCV?: (job: Job) => void;
   onCreateCoverLetter?: (job: Job) => void;
-  onLoginRequired?: () => void;
+  colors?: ModalColors | null;
 }
 
-export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter, onLoginRequired }: JobModalProps) {
-  const [colors, setColors] = useState<ModalColors | null>(null);
+export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter, colors: initialColors }: JobModalProps) {
   const [showCVDialog, setShowCVDialog] = useState(false); 
   const [isVisible, setIsVisible] = useState(true);
   const [shouldShowLogo, setShouldShowLogo] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isCoverLetterDialogOpen, setIsCoverLetterDialogOpen] = useState(false);
+  const [colors, setColors] = useState<ModalColors | null>(initialColors || null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -127,9 +127,12 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
       const modal = document.getElementById('job-modal-content');
       const cvDialog = document.getElementById('cv-dialog');
       const coverLetterDialog = document.getElementById('cover-letter-dialog');
+      const loginDialog = document.querySelector('[role="dialog"]');
       
       // Don't close if click is inside any of the dialogs
-      if (cvDialog?.contains(target) || coverLetterDialog?.contains(target)) {
+      if (cvDialog?.contains(target) || 
+          coverLetterDialog?.contains(target) || 
+          loginDialog?.contains(target)) {
         return;
       }
       
@@ -285,20 +288,20 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-semibold text-gray-900 truncate mb-1">
+                    <h2 className="text-lg font-semibold text-gray-900 truncate mb-1 text-left">
                       {job.title || 'Jobbtitel saknas'}
                     </h2>
                     <div className="flex flex-wrap gap-3">
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
+                      <div className="flex items-start gap-1.5">
+                        <Building2 className="w-4 h-4 text-gray-400 mt-0.5" />
+                        <span className="text-sm text-gray-600 text-left">
                           {getCompanyName()}
                         </span>
                       </div>
                       {job.location && (
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                          <span className="text-sm text-gray-600 text-left">
                             {typeof job.location === 'object' ? job.location.city : job.location}
                           </span>
                         </div>
@@ -317,37 +320,37 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div className="space-y-4">
                   <div className="bg-white shadow-sm border border-gray-100 p-3 rounded-lg">
-                    <div className="text-xs text-gray-500 mb-1 font-medium">Anställningsform</div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <Briefcase className="w-4 h-4 text-blue-600" />
-                      {job.employmentType}
+                    <div className="text-xs text-gray-500 mb-1 font-medium text-left">Anställningsform</div>
+                    <div className="flex items-start gap-2 text-sm font-medium text-gray-700">
+                      <Briefcase className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <span className="text-left">{job.employmentType}</span>
                     </div>
                   </div>
 
                   <div className="bg-white shadow-sm border border-gray-100 p-3 rounded-lg">
-                    <div className="text-xs text-gray-500 mb-1 font-medium">Antal tjänster</div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <Users className="w-4 h-4 text-blue-600" />
-                      {job.positions} st
+                    <div className="text-xs text-gray-500 mb-1 font-medium text-left">Antal tjänster</div>
+                    <div className="flex items-start gap-2 text-sm font-medium text-gray-700">
+                      <Users className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <span className="text-left">{job.positions} st</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="bg-white shadow-sm border border-gray-100 p-3 rounded-lg">
-                    <div className="text-xs text-gray-500 mb-1 font-medium">Erfarenhetskrav</div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                      <GraduationCap className="w-4 h-4 text-blue-600" />
-                      {job.requiresExperience ? 'Krävs' : 'Krävs ej'}
+                    <div className="text-xs text-gray-500 mb-1 font-medium text-left">Erfarenhetskrav</div>
+                    <div className="flex items-start gap-2 text-sm font-medium text-gray-700">
+                      <GraduationCap className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <span className="text-left">{job.requiresExperience ? 'Krävs' : 'Krävs ej'}</span>
                     </div>
                   </div>
 
                   {job.duration && (
                     <div className="bg-white shadow-sm border border-gray-100 p-3 rounded-lg">
-                      <div className="text-xs text-gray-500 mb-1 font-medium">Varaktighet</div>
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <Clock className="w-4 h-4 text-blue-600" />
-                        {job.duration}
+                      <div className="text-xs text-gray-500 mb-1 font-medium text-left">Varaktighet</div>
+                      <div className="flex items-start gap-2 text-sm font-medium text-gray-700">
+                        <Clock className="w-4 h-4 text-blue-600 mt-0.5" />
+                        <span className="text-left">{job.duration}</span>
                       </div>
                     </div>
                   )}
@@ -357,19 +360,19 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
               {/* Badges */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {job.salaryType && (
-                  <div className="bg-white shadow-sm border border-gray-100 px-3 py-1.5 rounded-full flex items-center gap-2">
-                    <Coins className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-700">{job.salaryType}</span>
+                  <div className="bg-white shadow-sm border border-gray-100 px-3 py-1.5 rounded-full flex items-start gap-2">
+                    <Coins className="w-4 h-4 text-blue-600 mt-0.5" />
+                    <span className="text-sm font-medium text-gray-700 text-left">{job.salaryType}</span>
                   </div>
                 )}
-                <div className="bg-white shadow-sm border border-gray-100 px-3 py-1.5 rounded-full flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">Publicerad: {formatDate(job.publishedDate)}</span>
+                <div className="bg-white shadow-sm border border-gray-100 px-3 py-1.5 rounded-full flex items-start gap-2">
+                  <Calendar className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <span className="text-sm font-medium text-gray-700 text-left">Publicerad: {formatDate(job.publishedDate)}</span>
                 </div>
                 {job.lastApplicationDate && (
-                  <div className="bg-red-50 border border-red-100 px-3 py-1.5 rounded-full flex items-center gap-2">
-                    <Timer className="w-4 h-4 text-red-600" />
-                    <span className="text-sm font-medium text-red-700">Sök senast: {formatDate(job.lastApplicationDate)}</span>
+                  <div className="bg-red-50 border border-red-100 px-3 py-1.5 rounded-full flex items-start gap-2">
+                    <Timer className="w-4 h-4 text-red-600 mt-0.5" />
+                    <span className="text-sm font-medium text-red-700 text-left">Sök senast: {formatDate(job.lastApplicationDate)}</span>
                   </div>
                 )}
               </div>
@@ -379,12 +382,12 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
                 {/* Left Column - Description */}
                 <div className="space-y-6">
                   <div className="prose prose-sm max-w-none text-gray-600 bg-white shadow-sm border border-gray-100 p-3 sm:p-4 rounded-xl">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-blue-600" />
-                      Beskrivning
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-start gap-2 text-left">
+                      <FileText className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <span>Beskrivning</span>
                     </h3>
                     <div 
-                      className="[&>h1]:text-lg [&>h1]:font-semibold [&>h1]:mb-3 [&>h2]:text-base [&>h2]:font-semibold [&>h2]:mb-2 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-3"
+                      className="[&>h1]:text-lg [&>h1]:font-semibold [&>h1]:mb-3 [&>h2]:text-base [&>h2]:font-semibold [&>h2]:mb-2 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-3 text-left"
                       dangerouslySetInnerHTML={{ __html: job.description }}
                     />
                     
@@ -398,7 +401,7 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
                           <ExternalLink className="w-5 h-5 mr-2" />
                           Gå till ansökan
                         </Button>
-                        <p className="text-sm text-gray-500 mt-2 text-center">
+                        <p className="text-sm text-gray-500 mt-2 text-left">
                           Ansökan sker på extern webbplats
                         </p>
                       </div>
@@ -410,12 +413,12 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
                 <div className="space-y-6">
                   {job.requirements && (
                     <div className="prose prose-sm max-w-none text-gray-600 bg-white shadow-sm border border-gray-100 p-3 sm:p-4 rounded-xl">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Target className="w-4 h-4 text-blue-600" />
-                        Kvalifikationer
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-start gap-2 text-left">
+                        <Target className="w-4 h-4 text-blue-600 mt-0.5" />
+                        <span>Kvalifikationer</span>
                       </h3>
                       <div 
-                        className="[&>h1]:text-lg [&>h1]:font-semibold [&>h1]:mb-3 [&>h2]:text-base [&>h2]:font-semibold [&>h2]:mb-2 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-3"
+                        className="[&>h1]:text-lg [&>h1]:font-semibold [&>h1]:mb-3 [&>h2]:text-base [&>h2]:font-semibold [&>h2]:mb-2 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-3 text-left"
                         dangerouslySetInnerHTML={{ __html: job.requirements }}
                       />
                     </div>
@@ -423,12 +426,12 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
 
                   {job.conditions && (
                     <div className="prose prose-sm max-w-none text-gray-600 bg-white shadow-sm border border-gray-100 p-3 sm:p-4 rounded-xl">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-blue-600" />
-                        Anställningsvillkor
+                      <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-start gap-2 text-left">
+                        <FileText className="w-4 h-4 text-blue-600 mt-0.5" />
+                        <span>Anställningsvillkor</span>
                       </h3>
                       <div 
-                        className="[&>h1]:text-lg [&>h1]:font-semibold [&>h1]:mb-3 [&>h2]:text-base [&>h2]:font-semibold [&>h2]:mb-2 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-3"
+                        className="[&>h1]:text-lg [&>h1]:font-semibold [&>h1]:mb-3 [&>h2]:text-base [&>h2]:font-semibold [&>h2]:mb-2 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:pl-4 [&>ol]:mb-3 text-left"
                         dangerouslySetInnerHTML={{ __html: job.conditions }}
                       />
                     </div>
@@ -437,12 +440,12 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
                   {/* Kontaktpersoner */}
                   {job.contacts && job.contacts.length > 0 && (
                     <div className="bg-white shadow-sm border border-gray-100 p-3 sm:p-4 rounded-xl">
-                      <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3 text-left">
                         📞 Kontaktpersoner
                       </h4>
                       <div className="space-y-3">
                         {job.contacts.map((contact, index) => (
-                          <div key={index} className="text-sm">
+                          <div key={index} className="text-sm text-left">
                             <p className="font-medium text-gray-900">{contact.description}</p>
                             {contact.phoneNumber && <p className="text-gray-600">☎️ {contact.phoneNumber}</p>}
                             {contact.email && <p className="text-gray-600">✉️ {contact.email}</p>}
@@ -518,7 +521,6 @@ export default function JobModal({ job, onClose, onCreateCV, onCreateCoverLetter
           onClose={() => setShowCVDialog(false)}
           jobTitle={job.title}
           logoUrl={job.logotype}
-          onLoginRequired={onLoginRequired}
           jobDescription={job.description}
           colors={colors}
           job={job}

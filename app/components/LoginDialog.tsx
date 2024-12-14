@@ -12,10 +12,14 @@ interface LoginDialogProps {
 export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      onClose();
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result?.user) {
+        onClose();
+      }
     } catch (error) {
-      console.error('Google login error:', error);
+      if (error.code !== 'auth/popup-closed-by-user') {
+        console.error('Google login error:', error);
+      }
     }
   };
 
@@ -29,7 +33,7 @@ export default function LoginDialog({ isOpen, onClose }: LoginDialogProps) {
         </DialogHeader>
         <div className="space-y-4">
           <Button 
-            onClick={handleGoogleLogin} 
+            onClick={handleGoogleLogin}
             className="w-full py-2 px-4 border flex justify-center items-center gap-2 border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 transition duration-150 shadow-sm"
           >
             <FcGoogle className="w-5 h-5" />
