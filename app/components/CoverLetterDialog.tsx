@@ -41,7 +41,7 @@ const templates: TemplateOption[] = [
     id: 'modern',
     name: 'Modern',
     description: 'En modern och professionell mall med rena linjer och tydlig struktur.',
-    preview: '/cover-letter-templates/creative-preview.png',
+    preview: '/cv-templates/creative-preview.png',
     available: true
   },
   {
