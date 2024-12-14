@@ -41,21 +41,21 @@ const templates: TemplateOption[] = [
     id: 'modern',
     name: 'Modern',
     description: 'En modern och professionell mall med rena linjer och tydlig struktur.',
-    preview: '/cv-templates/creative-preview.png',
+    preview: '/cv-templates/2.png',
     available: true
   },
   {
     id: 'classic',
     name: 'Klassisk',
     description: 'En tidlös och elegant mall som passar för traditionella branscher.',
-    preview: '/cover-letter-templates/3.png',
+    preview: '/cv-templates/3.png',
     available: false
   },
   {
     id: 'creative',
     name: 'Kreativ',
     description: 'En dynamisk mall designad för kreativa branscher.',
-    preview: '/cover-letter-templates/4.png',
+    preview: '/cv-templates/4.png',
     available: false
   }
 ];
