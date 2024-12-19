@@ -200,7 +200,11 @@ export default function JobCard({ job, onCreateCV, onCreateCoverLetter, searchKe
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-1 truncate">{getCompanyName()}</h3>
+              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-1 truncate">{job.title}</h3>
+              <div className="flex items-center text-gray-600 text-sm mb-1">
+                <Building2 className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                <span className="truncate">{getCompanyName()}</span>
+              </div>
               {job.workplace?.municipality && (
                 <div className="flex items-center text-gray-500 text-sm">
                   <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
