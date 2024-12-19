@@ -327,20 +327,16 @@ export default function CoverLetterDialog({
                         }
                       }}
                     >
-                      <div className={cn(
-                        "relative rounded-lg overflow-hidden",
-                        template.available && selectedTemplate === template.id ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'
-                      )}>
+                      <div className={`relative rounded-lg overflow-hidden aspect-[3/4] ${template.available && selectedTemplate === template.id ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'}`}>
                         <NextImage
                           src={template.preview}
                           alt={template.name}
-                          width={300}
-                          height={424}
-                          className={cn(
-                            "w-full h-auto",
-                            template.available && "transform transition-all duration-500 ease-in-out group-hover:scale-110"
-                          )}
+                          fill
+                          className="object-contain object-top transform transition-transform duration-300 group-hover:scale-105"
                         />
+                        {template.available && (
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        )}
                         {!template.available && (
                           <>
                             <div className="absolute inset-0 bg-black bg-opacity-20" />
@@ -351,17 +347,9 @@ export default function CoverLetterDialog({
                             </div>
                           </>
                         )}
-                        {template.available && (
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        )}
                       </div>
                       <div className="mt-3 text-center">
-                        <h3 className={cn(
-                          "font-medium text-lg",
-                          !template.available && "text-gray-500"
-                        )}>
-                          {template.name}
-                        </h3>
+                        <h3 className="font-medium text-lg">{template.name}</h3>
                         {template.available && selectedTemplate === template.id && (
                           <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
                             <Check className="w-4 h-4" />

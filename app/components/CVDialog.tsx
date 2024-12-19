@@ -65,7 +65,7 @@ const cvTemplates = [
   { id: 'template1', name: 'Klassisk', thumbnail: '/cv-templates/2.png', description: 'En klassisk CV-mall som passar de flesta.', free: true },
   { id: 'template2', name: 'Modern', thumbnail: '/cv-templates/1.png', description: 'En modern CV-mall som ger ett professionellt intryck.', free: false },
   { id: 'template3', name: 'Kreativ', thumbnail: '/cv-templates/3.png', description: 'En kreativ CV-mall som ger utrymme för personlighet.', free: false },
-  { id: 'template4', name: 'Professionell', thumbnail: '/cv-templates/4.png', description: 'En professionell CV-mall som passar för chefer och ledare.', free: false },
+  { id: 'template4', name: 'Professionell', thumbnail: '/cv-templates/5.png', description: 'En professionell CV-mall som passar för chefer och ledare.', free: false },
 ];
 
 const templateOptions = [
