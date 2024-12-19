@@ -39,24 +39,10 @@ interface TemplateOption {
 const templates: TemplateOption[] = [
   {
     id: 'modern',
-    name: 'Modern',
+    name: 'Mall 1',
     description: 'En modern och professionell mall med rena linjer och tydlig struktur.',
     preview: '/cv-templates/personligt.png',
     available: true
-  },
-  {
-    id: 'classic',
-    name: 'Klassisk',
-    description: 'En tidlös och elegant mall som passar för traditionella branscher.',
-    preview: '/cv-templates/5.png',
-    available: false
-  },
-  {
-    id: 'creative',
-    name: 'Kreativ',
-    description: 'En dynamisk mall designad för kreativa branscher.',
-    preview: '/cv-templates/6.png',
-    available: false
   }
 ];
 

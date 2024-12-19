@@ -406,7 +406,7 @@ export default function CVDialog({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
                       <div className="mt-3 text-center">
-                        <h3 className="font-medium text-lg">CV Mall 2</h3>
+                        <h3 className="font-medium text-lg">CV Mall 1</h3>
                         {selectedTemplate === "modern" && (
                           <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
                             <Check className="w-4 h-4" />
@@ -433,7 +433,7 @@ export default function CVDialog({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
                       <div className="mt-3 text-center">
-                        <h3 className="font-medium text-lg">CV Mall 3</h3>
+                        <h3 className="font-medium text-lg">CV Mall 2</h3>
                         {selectedTemplate === "creative" && (
                           <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg">
                             <Check className="w-4 h-4" />
@@ -451,7 +451,7 @@ export default function CVDialog({
                     >
                       <div className="relative rounded-lg overflow-hidden aspect-[3/4]">
                         <Image
-                          src="/cv-templates/4.png"
+                          src="/cv-templates/5.png"
                           alt="Coming Soon Template"
                           fill
                           className="object-contain object-top"
@@ -464,7 +464,7 @@ export default function CVDialog({
                         </div>
                       </div>
                       <div className="mt-3 text-center">
-                        <h3 className="font-medium text-lg text-gray-500">Mall 4</h3>
+                        <h3 className="font-medium text-lg text-gray-500">CV Mall 3</h3>
                       </div>
                     </div>
                   </div>

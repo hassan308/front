@@ -107,11 +107,7 @@ export default function JobSearch() {
         setIsInitialView(false);
       } else {
         // Vanlig sökning
-        console.log('Making direct search request with:', {
-          search_term: keyword,
-          municipality: location,
-          max_jobs: 500
-        });
+
         const searchResponse = await fetch(API_ENDPOINTS.search, {
           method: 'POST',
           headers: {
@@ -129,7 +125,6 @@ export default function JobSearch() {
         }
 
         const searchResults = await searchResponse.json();
-        console.log('Svar från backend:', searchResults);
         setJobs(searchResults.jobs || []);
         setIsInitialView(false);
       }
