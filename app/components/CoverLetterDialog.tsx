@@ -22,7 +22,7 @@ interface CoverLetterDialogProps {
 }
 
 const templates = [
-  { id: 'template1', name: 'Modern', thumbnail: '/cv-templates/4.png', description: 'En modern mall som passar de flesta.', free: true },
+  { id: 'template1', name: 'Modern', thumbnail: '/cv-templates/personligt.png', description: 'En modern mall som passar de flesta.', free: true },
   { id: 'template2', name: 'Klassisk', thumbnail: '/cv-templates/5.png', description: 'En klassisk mall som ger ett professionellt intryck.', free: false },
   { id: 'template3', name: 'Kreativ', thumbnail: '/cv-templates/6.png', description: 'En kreativ mall som ger utrymme för personlighet.', free: false },
 ];
