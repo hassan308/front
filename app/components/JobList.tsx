@@ -6,7 +6,7 @@ import { Job } from '../types';
 import CVDialog from './CVDialog';
 import { motion } from 'framer-motion';
 import { SearchBar } from './SearchBar';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Briefcase, GraduationCap, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface JobListProps {
@@ -205,76 +205,122 @@ export default function JobList({
       )}
 
       {showFilters && (
-        <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-          {/* Filter innehåll här */}
-          <div className="space-y-3">
-            <h3 className="font-medium text-gray-900">Sök i tabellen</h3>
-            <div className="flex items-center gap-2">
+        <div className="mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 space-y-4">
+            <h3 className="font-medium text-gray-900">Filtrera jobb</h3>
+
+            {/* Search input */}
+            <div>
               <input
                 type="text"
                 value={tableSearchTerm}
                 onChange={(e) => setTableSearchTerm(e.target.value)}
                 placeholder="Sök efter jobb, företag eller plats..."
-                className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-          </div>
 
-          <div className="space-y-3">
-            <h3 className="font-medium text-gray-900">Anställningstyp</h3>
-            <div className="space-y-2">
-              {uniqueFilters.employmentType.map(type => (
-                <label key={type} className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={activeFilters.employmentType.includes(type)}
-                    onChange={() => toggleFilter('employmentType', type)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-600 group-hover:text-gray-900">
-                    {type}
-                  </span>
-                </label>
-              ))}
+            {/* Employment Type */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-gray-400" />
+                Anställningstyp
+              </h4>
+              <div className="space-y-2">
+                {uniqueFilters.employmentType.map(type => {
+                  const count = jobsArray.filter(job => job.employment_type === type).length;
+                  return (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={activeFilters.employmentType.includes(type)}
+                        onChange={() => toggleFilter('employmentType', type)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-1 focus:ring-offset-0 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-600 flex-1">
+                        {type}
+                      </span>
+                      <span className="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+                        {count}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3">
-            <h3 className="font-medium text-gray-900">Erfarenhet</h3>
-            <div className="space-y-2">
-              {uniqueFilters.experience.map(exp => (
-                <label key={exp} className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={activeFilters.experience.includes(exp)}
-                    onChange={() => toggleFilter('experience', exp)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-600 group-hover:text-gray-900">
-                    {exp}
-                  </span>
-                </label>
-              ))}
+            {/* Experience */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-gray-400" />
+                Erfarenhet
+              </h4>
+              <div className="space-y-2">
+                {uniqueFilters.experience.map(exp => {
+                  const count = jobsArray.filter(job => 
+                    (job.requiresExperience ? 'Erfarenhet krävs' : 'Ingen erfarenhet krävs') === exp
+                  ).length;
+                  return (
+                    <label key={exp} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={activeFilters.experience.includes(exp)}
+                        onChange={() => toggleFilter('experience', exp)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-1 focus:ring-offset-0 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-600 flex-1">
+                        {exp}
+                      </span>
+                      <span className="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+                        {count}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3">
-            <h3 className="font-medium text-gray-900">Plats</h3>
-            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
-              {uniqueFilters.location.map(location => (
-                <label key={location} className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={activeFilters.location.includes(location)}
-                    onChange={() => toggleFilter('location', location)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-600 group-hover:text-gray-900">
-                    {location}
-                  </span>
-                </label>
-              ))}
+            {/* Location */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-400" />
+                Plats
+              </h4>
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                {uniqueFilters.location.map(location => {
+                  const count = jobsArray.filter(job => job.workplace?.municipality === location).length;
+                  return (
+                    <label key={location} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={activeFilters.location.includes(location)}
+                        onChange={() => toggleFilter('location', location)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-1 focus:ring-offset-0 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-600 flex-1">
+                        {location}
+                      </span>
+                      <span className="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+                        {count}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Clear filters button */}
+            {totalActiveFilters > 0 && (
+              <div className="pt-2">
+                <button
+                  onClick={clearFilters}
+                  className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center gap-1.5 border border-blue-100 rounded-xl hover:bg-blue-50/50 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Rensa filter ({totalActiveFilters})
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
