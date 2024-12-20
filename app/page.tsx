@@ -19,9 +19,11 @@ import { Search, FileText, Zap, MapPin, Briefcase, GraduationCap, Code, Stethosc
 import { Job } from './types'; 
 import { API_ENDPOINTS } from './config/api';
 import { cn } from './lib/utils';
+import { useRouter } from 'next/navigation';
 
 export default function JobSearch() {
   // Constants
+  const router = useRouter();
   const popularSearches = [
     { icon: Stethoscope, label: 'Sjuksköterska' },
     { icon: Code, label: 'Systemutvecklare' },
@@ -144,10 +146,30 @@ export default function JobSearch() {
     setLocation('');
   };
 
-  const handleLogout = () => {
-    signOut(auth).catch((error) => {
+  const handleLogout = async () => {
+    try {
+      // Rensa lokal lagring
+      localStorage.removeItem('userProfile');
+      localStorage.removeItem('userSettings');
+      localStorage.removeItem('searchHistory');
+      sessionStorage.clear();
+      
+      // Rensa state
+      setIsProfileOpen(false);
+      setSelectedJob(null);
+      setJobs([]);
+      setSearchKeyword('');
+      setLocation('');
+      setIsInitialView(true);
+      
+      // Logga ut från Firebase
+      await signOut(auth);
+      
+      // Omdirigera till startsidan
+      router.push('/');
+    } catch (error) {
       console.error('Logout error:', error);
-    });
+    }
   };
 
   const handleCreateCoverLetter = (job: Job) => {
@@ -444,9 +466,9 @@ export default function JobSearch() {
       <CoverLetterDialog 
         isOpen={isCreateCoverLetterOpen} 
         onClose={() => setIsCreateCoverLetterOpen(false)} 
-        onSubmit={(coverLetterData: any) => {
-          setIsCreateCoverLetterOpen(false)
-        }} 
+        jobTitle={selectedJob?.title || ''}
+        jobDescription={selectedJob?.description || ''}
+        logoUrl={selectedJob?.company?.logo_url}
       />
       <LoginDialog isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <RegisterDialog isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} />

@@ -38,10 +38,17 @@ interface TemplateOption {
 
 const templates: TemplateOption[] = [
   {
-    id: 'modern',
+    id: 'creative',
     name: 'Mall 1',
     description: 'En modern och professionell mall med rena linjer och tydlig struktur.',
     preview: '/cv-templates/personligt.png',
+    available: true
+  },
+  {
+    id: 'v2',
+    name: 'Mall 2',
+    description: 'En alternativ mall med fokus på personlig presentation.',
+    preview: '/cv-templates/7.png',
     available: true
   }
 ];
@@ -302,7 +309,7 @@ export default function CoverLetterDialog({
                     <div 
                       key={template.id}
                       className={cn(
-                        "relative group",
+                        "relative group aspect-[2/3]",
                         template.available ? "cursor-pointer" : "opacity-60 cursor-not-allowed"
                       )}
                       onClick={(e) => {
@@ -314,17 +321,17 @@ export default function CoverLetterDialog({
                       }}
                     >
                       <div className={cn(
-                        "relative rounded-lg overflow-hidden",
+                        "relative rounded-lg overflow-hidden h-full",
                         template.available && selectedTemplate === template.id ? 'ring-4 ring-blue-500 shadow-lg' : 'ring-1 ring-gray-200 hover:ring-blue-300'
                       )}>
                         <NextImage
                           src={template.preview}
                           alt={template.name}
-                          width={300}
-                          height={424}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           className={cn(
-                            "w-full h-auto",
-                            template.available && "transform transition-all duration-500 ease-in-out group-hover:scale-110"
+                            "object-contain",
+                            template.available && "transform transition-all duration-500 ease-in-out group-hover:scale-105"
                           )}
                         />
                         {!template.available && (
